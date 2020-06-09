@@ -104,7 +104,7 @@ Study Mnemonic: R2-2020-CAZER-1
 ---
 Code Citation: 
 
-Cazer, Casey L. (2020).   "Replication Package for Analysis of multidrug resistance with a machine learning generated antibiogram for Staphylococcus aureus at one New York hospital between 2008 and 2018" (version 1) [R files].  DOI:
+Cazer, Casey L. (2020).   "Replication Package for Analysis of multidrug resistance with a machine learning generated antibiogram for Staphylococcus aureus at one New York hospital between 2008 and 2018" (version 1) [R files].  DOI: 10.5281/zenodo.3887072
 
 Code Author ORCID:      Casey L. Cazer: 0000-0002-2290-1868
 Code last updated: 	March 27, 2020	

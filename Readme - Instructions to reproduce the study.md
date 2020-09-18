@@ -26,6 +26,8 @@ Briefly, the analysis has the following steps:
 9. "descriptive analysis.R": displaying descriptive statistics of specific itemsets used as examples in the manuscript
 10. "methods example.R": verifying calculations used in Appendix tables to demonstrate association mining calculations
 
+Steps 1-7 are repeated to analyze the data with epidemiologic cut-off values.
+
 Data is available upon request and approval by the SENTRY Antimicrobial Surveillance Program. Aggregated data is available at https://sentry-mvp.jmilabs.com/app/sentry-public. License for use of this data will be determined by the SENTRY Antimicrobial Surveillance Program when data is released to investigators. The data file must be placed in the data folder.
 
 Data Citation: Stephen Jenkins, JMI Laboratories. (2018). "Antimicrobial susceptibility testing SENTRY site 136 2008-2018". [Excel file "Linelist SENTRY site_136.xlsx"]. DOI: 10.5281/zenodo.3887031

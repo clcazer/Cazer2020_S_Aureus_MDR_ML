@@ -9,11 +9,6 @@ QM <- "cLift"
 
 bootNames <- c("SA2008_bestsets_boot", "SA2009_bestsets_boot", "SA2010_bestsets_boot", "SA2011_bestsets_boot", "SA2012_bestsets_boot", "SA2013_bestsets_boot", "SA2014_bestsets_boot", "SA2015_bestsets_boot", "SA2016_bestsets_boot", "SA2017_bestsets_boot", "SA2018_bestsets_boot")
 
-#boot.result <- foreach(i=seq_along(bootNames),
-                       #.packages=c('arules', 'plyr', 'dplyr', 'purrr'),
-                       #.export=ls(.GlobalEnv),
-                       #.inorder=T,
-                       #.final=function(x) setNames(x, bootNames)) %>% dopar{
 for (i in seq_along(bootNames)){ #for each db
   bestsets <- get(best_setNames[i]) #get the bestsets
   setList <- LIST(items(bestsets)) #list all the sets in the bestsets
@@ -25,6 +20,7 @@ for (i in seq_along(bootNames)){ #for each db
   label <- paste('SA',as.character(paste(2007+i)), "_bestsets_boot", sep="")
   assign(label,bootstrapCI) #save
   rm(boot, bootstrapCI, label, bestsets, setList, dbName, transName)
+  print(i)
 }
 
 
@@ -106,20 +102,20 @@ all.sets_combined_boot <- merge(all.sets_combined, bestsets_boot_lift_combined,
 all.sets_combined_boot$LiftCrosses1 <- all.sets_combined_boot$cLiftBoot0.025 <=1 & all.sets_combined_boot$cLiftBoot0.975 >=1
 
 #for the sup table, drop those with Lift Crossing 1 and drop that column, Classes column, and eLift (single letter codes)
-SupTable3 <- filter(all.sets_combined_boot, LiftCrosses1==FALSE) %>% select(-LiftCrosses1, -Classes, -eLift)
+SupTable5 <- filter(all.sets_combined_boot, LiftCrosses1==FALSE) %>% select(-LiftCrosses1, -Classes, -eLift)
 #change category abbrevitions to match manuscript
 ##strip SA from beginning
-SupTable3$Category <- as.character(SupTable3$Category)
-SupTable3$Category <- str_replace(SupTable3$Category, "^SA", "")
-SupTable3$Category <- dplyr::recode(SupTable3$Category, .pneum="PIHP",
+SupTable5$Category <- as.character(SupTable5$Category)
+SupTable5$Category <- str_replace(SupTable5$Category, "^SA", "")
+SupTable5$Category <- dplyr::recode(SupTable5$Category, .pneum="PIHP",
                                                   .blood="BSI",
                                                   .inabd="IAI",
                                                   .SST="SSSI")
 #reorder to put class columns earlier
-SupTable3 <- select(SupTable3, "Category", "items", "order", "ClassCodes", "NumClasses", everything())
+SupTable5 <- select(SupTable5, "Category", "items", "order", "ClassCodes", "NumClasses", everything())
 
 #name QM columns consistent with manuscript
-SupTable3 <- dplyr::rename(SupTable3, Resistance_Pattern=items,
+SupTable5 <- dplyr::rename(SupTable5, Resistance_Pattern=items,
                     Number_of_Resistance_Traits_in_Pattern=order,
                     Antimicrobial_Classes_in_Pattern=ClassCodes,
                     Support=support,
@@ -133,5 +129,5 @@ SupTable3 <- dplyr::rename(SupTable3, Resistance_Pattern=items,
 
 
 #save to table
-filename <- "results/Sup Table 3_all resistance patterns.xlsx"
-write.xlsx(SupTable3, filename, row.names = FALSE)
+filename <- "results/Sup Table 5_all resistance patterns_ECV.xlsx"
+write.xlsx(SupTable5, filename, row.names = FALSE)

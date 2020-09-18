@@ -1,10 +1,9 @@
 
 # title: "Data Prep"
 # author: "Casey Cazer"
-# Last Updated: "September 9, 2020"
+# Last Updated: "September 10, 2020"
 
 #this script prepares MIC data for analysis
-
 
 #load data
 #contains blank cells which are interpreted as a factor level instead of missing (NA)--use na.strings
@@ -14,8 +13,6 @@ jmi <- read.table("data/Linelist SENTRY site_136.csv", header=TRUE, skipNul =TRU
 SA <- jmi[which(jmi$Organism.Code=="SA"),]
 rm(jmi)
 
-
-#use only AM that were tested in >1 isolate
 #antimicrobial (AM) columns, identified through examining dataset
 AM_col <- c(18:85)
 
@@ -35,13 +32,11 @@ AM_include <- AM_include[!AM_include %in% "Nitrofurantoin"]
 
 
 #AM resistance breakpoints
-SA.bp=read.table("data/Staph aureus breakpoints.csv", header=TRUE, skipNul = TRUE, sep=",", colClasses=c(rep("character", 4), "numeric", "character", "character", "NULL", "NULL", "NULL" ), encoding = "UTF-8")
-names(SA.bp)=col.names = c("Antimicrobial","S", "I", "R", "NSbp", "Resource", "Abbreviation")
-#S breakpoint column is <= #; R breakpoint column is >= #. non-susceptible breakpoint column is > #. 
-
-#ignore epidemiologic cut-off values (ECOFF) and non-CLSI/FDA/EUCAST cutoffs (e.g. Hetem13 for mupirocin)
-SA.bp <- dplyr::filter (SA.bp, Resource!="ECOFF", Resource!="Hetem13")
-
+SA.bp=read.table("data/Staph aureus breakpoints.csv", header=TRUE, skipNul = TRUE, sep=",", colClasses=c("character", rep("NULL", 5), "character", "numeric", "character", "NULL" ), encoding = "UTF-8")
+names(SA.bp)=col.names = c("Antimicrobial", "Abbreviation","NSbp", "Resource")
+#non-susceptible breakpoint column is > #. 
+#include only AM with ECV (EUCAST)
+SA.bp <- filter(SA.bp, Resource=="EUCAST")
 
 #create SA database with only metadata and AM_include
 #relevant metadata: Collection.Number, Isolate.Number, Objective, Study.Year, Bank.Number, Infection.Source, Infection.Type, Nosocomial, Admit.Date, Age, Gender, Culture.Date, Specimen.Type, VAP, ICU
@@ -52,6 +47,40 @@ SA.bin <- select(SA, metadata_include, AM_include)
 #convert MIC to numeric for AM with breakpoints (bp)
 AM_include_with_bp <- match(SA.bp$Antimicrobial, names(SA.bin)) #MIC_to_interpretation function requires a numerical index: AM_include_with_bp
 AM_include_with_bp <- AM_include_with_bp[!is.na(AM_include_with_bp)]
+
+#include only AM that were used in clinical bp analysis
+AM_include_with_bp <- AM_include_with_bp[names(SA.bin)[AM_include_with_bp] %in% AM_with_clinical_bp]
+
+#since the susceptibility testing was done with clinical breakpoints in mind, some dilution ranges may not cover the ECV
+for (i in AM_include_with_bp){ #for each MIC column
+  bp.index<-match(names(SA.bin)[i],SA.bp$Antimicrobial) #index of which AM bp should be applied to the i MIC column
+  
+  #Check that the dilutions tested cover the breakpoint appropriately (bp must be > smallest MIC value and < largest MIC value tested). Print warning if the bp does not fall within the tested dilutions
+  min_dilution_too_big = as.numeric(str_match(as.character(SA.bin[,i]), "<=(.*)")[,2])>SA.bp$NSbp[bp.index] #TRUE if minimum dilution is greater than bp; FALSE if it is less than bp; NA if row does not contain a minimum dilution ("<=")
+  #str_match splits the MIC into two columns at "<=". The original string is in the first column returned. If there is a "<=", the MIC is in the second column. if there is not a "<=", it generates an NA in both columns
+  
+  #report affected AM
+  if (any(min_dilution_too_big==TRUE, na.rm=TRUE)){
+    warning("minimum dilution greater than breakpoint for ", colnames(SA.bin)[i], ". ", sum(min_dilution_too_big==TRUE, na.rm=TRUE), " values replaced by NA \n")
+  }
+  
+  max_dilution_too_small=as.numeric(str_match(as.character(SA.bin[,i]), ">(.*)")[,2])<SA.bp$NSbp[bp.index] #TRUE if max dilution is less than bp; FALSE if max dilution is greter than bp; NA if does not contain a max dilution (">")
+  #str_match splits the MIC into two columns at ">". The original string is in the first column. If there is a ">", the MIC is in the second column. if there is not a ">", it generates an NA in both columns
+  
+  #report affected AM
+  if (any(max_dilution_too_small==TRUE, na.rm=TRUE)){
+    warning("maximum dilution less than breakpoint for ", colnames(data)[i], ". ", sum(max_dilution_too_small==TRUE, na.rm=TRUE)," values replaced by NA \n")
+  }
+  
+  #turn NA into FALSE for indexing
+  min_dilution_too_big <- replace_na(min_dilution_too_big, FALSE)
+  max_dilution_too_small <- replace_na(max_dilution_too_small, FALSE)
+  
+  #replace MIC values with NA when it is a min dilution that is too big or a max dilution that is too small
+  SA.bin[min_dilution_too_big,i] <- as.character(NA)
+  SA.bin[max_dilution_too_small,i] <- as.character(NA)
+}
+
 SA.bin <- MIC_to_interpretation(SA.bin, AM_include_with_bp, SA.bp) #if no bp, column will not be logical T/F
 
 #drop AM columns that are not logical (no breakpoints)
@@ -112,6 +141,8 @@ for (i in 1:length(type.dbNames)){
 #k: oxazolidinone: linezolid, tedizolid
 #l: streptogramin: quindalfo
 #m: glycopeptide: teicoplanin, vancomycin
+#n: mupirocin
+#o: pleuromutilins: retapamulin
 
 #code each AM as a one-letter class (for sorting) and two-letter code (for easier interpretation)
 
@@ -154,7 +185,9 @@ AM_class$Class <- dplyr::recode(AM_class$AM,
                          "Tedizolid" = "k",
                          "QuinDalfo" = "l",
                          "Teicoplanin" = "m",
-                         "Vancomycin" = "m"
+                         "Vancomycin" = "m",
+                         "Mupirocin" = "n",
+                         "Retapamulin" = "o"
 )
 
 #eventually want to use two-letter codes for AM rather than one letter codes (e.g. labels, etc)
@@ -171,7 +204,9 @@ AM_class$Code <- dplyr::recode_factor(AM_class$Class,
                                j = "FA",
                                k = "OZ",
                                l = "SG",
-                               m = "GP"
+                               m = "GP",
+                               n = "MP",
+                               o = "PM"
 )
 
 #get abbreviation for antimicrobial from SA.bp

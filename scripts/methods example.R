@@ -2,8 +2,8 @@
 # author: "Casey Cazer"
 # Last updated: May 4, 2020
 
-#for appendix
-
+#for Supplementary
+sink("results/supplementary methods.rtf", append=FALSE)
 #example data
 example <- data.frame("Ampicillin" = c("TRUE", "FALSE", "FALSE", "FALSE", "TRUE", "TRUE", "FALSE", "FALSE", "TRUE", "TRUE"),
                       "Ciprofloxacin" = c("TRUE", "FALSE", "FALSE", "FALSE", "TRUE", "TRUE", "TRUE", "FALSE", "FALSE", "FALSE"),
@@ -13,14 +13,14 @@ example <- data.frame("Ampicillin" = c("TRUE", "FALSE", "FALSE", "FALSE", "TRUE"
 example <- as.data.frame(sapply(example, as.logical))
 example.trans <- as(example, "transactions")
 summary(example.trans)
-example #Appendix Table 1
-summary(example) #Appendix Table 1 Support
+example #Supplementary Table6
+summary(example) #Supplementary Table6 Support
 
 #itemsets
 example.sets <- apriori(example.trans, parameter=list(support=1/length(example.trans),  maxlen=4, minlen=2, target="frequent itemsets"))
 example.sets@quality$CrossSupRatio <- interestMeasure(example.sets, "crossSupportRatio", example.trans, reuse=TRUE)
 example.sets@quality$lift <- interestMeasure(example.sets, "lift", example.trans, reuse=TRUE)
-inspect(example.sets) #Appendix Table2
+inspect(example.sets) #Supplementary Table7
 
 
 #introduce missing data
@@ -32,8 +32,8 @@ example2 <- data.frame("Ampicillin" = c("TRUE", "FALSE", "FALSE", "FALSE", "TRUE
 example2 <- as.data.frame(sapply(example2, as.logical))
 example2.trans <- as(example2, "transactions")
 summary(example2.trans)
-example2 #Appendix Table3
-summary(example2) #Appendix Table3 eSupport row; Support row is same as Appendix Table1
+example2 #Supplementary Table8
+summary(example2) #Supplementary Table8 eSupport row; Support row is same as Supplementary Table6
 
 #optimistic data
 example2.o <- example2
@@ -50,4 +50,5 @@ example2.sets@quality$eSup <- eQM$eSup
 example2.sets@quality$eCSR <- eQM$eCSR
 example2.sets@quality$cLift <- eQM$cLift
 
-inspect(example2.sets) #Appendix Table4
+inspect(example2.sets) #Supplementary Table9
+sink()

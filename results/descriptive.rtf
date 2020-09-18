@@ -6,16 +6,14 @@
 > nrow(SA.db)
 [1] 1091
 
-> #tet-clinda resistance in SST (also cited in results)
+> #tet-clinda resistance in SST (also cited in discussion)
 > filter(all.sets_combined_boot, Category=="SA.SST", items=="Clindamycin,Tetracycline")
-  Category                    items    support count csr     lift       eSup      eCSR
-1   SA.SST Clindamycin,Tetracycline 0.01481481     8 0.6 1.469388 0.01495327 0.6045283
-     eLift    cLift order Classes NumClasses ClassCodes cLiftBoot0.025 cLiftBoot0.975
-1 1.439481 1.505714     2     d,g          2      LC,TE      0.6575278       2.478987
-  LiftCrosses1
-1         TRUE
+  Category                    items    support count csr     lift       eSup      eCSR    eLift    cLift order Classes
+1   SA.SST Clindamycin,Tetracycline 0.01481481     8 0.6 1.469388 0.01495327 0.6045283 1.439481 1.505714     2     d,g
+  NumClasses ClassCodes cLiftBoot0.025 cLiftBoot0.975 LiftCrosses1
+1          2      LC,TE      0.6575278       2.478987         TRUE
 
-> #were these isolates MRSA or MSSA? (cited in results)
+> #were these isolates MRSA or MSSA? (cited in discussion)
 > filter(SA.SST_db, Clindamycin==TRUE, Tetracycline==TRUE) %>% select(Oxacillin)
   Oxacillin
 1      TRUE
@@ -27,10 +25,6 @@
 7      TRUE
 8      TRUE
 
-> #number of antimicrobials tested
-> length(AM_include)
-[1] 43
-
 > #years covered
 > min(SA.db$Study.Year)
 [1] 2008
@@ -38,44 +32,50 @@
 > max(SA.db$Study.Year)
 [1] 2018
 
+> ###in Results
 > #number of antimicrobials with clincal breakpoints
 > length(AM_include_with_bp)
 [1] 28
 
-> ###in Results
+> #number of unique AM classes
+> length(unique(AM_class$Class))
+[1] 13
+
 > #overall prevalence of methicillin-resistance (from antibiogram, SupTable 1)
-> filter(as.data.frame(SupTable1), Category=="Overall") .... [TRUNCATED] 
+> filter(as.data.frame(SupTable1), Category=="Overall") %>% select("Oxa ..." ... [TRUNCATED] 
     Oxacillin
 1 0.39 (1091)
 
 > #overall prevalence of MDR (>= 3 class resistances)
 > filter(mdr.classtable, !(NumClassRes %in% c("0", "1", "2"))) %>% summarize(sum=sum(NumIsolates .... [TRUNCATED] 
-        sum
-1 0.3950504
+    sum
+1 0.395
 
 > #overall prevalence of pan-susceptible
 > filter(mdr.classtable, NumClassRes=="0") %>% summarize(sum=sum(NumIsolates)/sum(mdr.classtable$NumIsolates) .... [TRUNCATED] 
-        sum
-1 0.1329056
+    sum
+1 0.133
 
 > #five most common class resistance pattern, with cLift interval excluding 1
 > filter(all.sets_combined_boot, LiftCrosses1==FALSE) %>% group_by(Class .... [TRUNCATED] 
+`summarise()` ungrouping output (override with `.groups` argument)
 # A tibble: 5 x 3
   ClassCodes count avgcLift
   <chr>      <int>    <dbl>
-1 FQ,MC        112     3.45
-2 BL,FQ         98     4.25
-3 BL,FQ,MC      92     6.57
+1 BL,FQ,MC     134     5.00
+2 FQ,MC        112     3.45
+3 BL,FQ        106     4.03
 4 FQ            55     5.06
-5 BL,MC         34     1.56
+5 BL,MC         38     1.52
 
 > #BL*FQ patterns by category (e.g. pneumonia vs MRSA)
 > filter(all.sets_combined_boot, LiftCrosses1==FALSE, ClassCodes=="BL,FQ") %>% group_by(Categor .... [TRUNCATED] 
+`summarise()` ungrouping output (override with `.groups` argument)
 # A tibble: 16 x 3
    Category count avgcLift
    <fct>    <int>    <dbl>
  1 SA.pneum    21     4.82
- 2 MRSA         8     1.33
+ 2 MRSA        16     1.34
  3 SA2008       7     3.90
  4 SA2009       7     4.98
  5 SA2010       7     4.50
@@ -91,52 +91,83 @@
 15 SA2012       1     2.34
 16 SA2015       1     2.02
 
-> #top 5 class resistance patterns with greatest average cLift
-> filter(all.sets_combined_boot, LiftCrosses1==FALSE) %>% group_by(ClassCodes) %>% dply .... [TRUNCATED] 
-# A tibble: 5 x 3
-  ClassCodes  count avgcLift
-  <chr>       <int>    <dbl>
-1 AG,TE,SF        2     82.5
-2 MC,LC,LG,TE     1     65.5
-3 BL,TE,SF        1     64.5
-4 MC,LC,TE        3     38.7
-5 MC,LC,LG        2     11.9
+> #top 5 resistance patterns with greatest average cLift
+> filter(all.sets_combined_boot, LiftCrosses1==FALSE) %>% group_by(items) %>% dplyr::summaris .... [TRUNCATED] 
+`summarise()` ungrouping output (override with `.groups` argument)
 
-> #specific drugs in the high cLift patterns
-> filter(all.sets_combined_boot, LiftCrosses1==FALSE) %>% group_by(ClassCodes) %>% select(Category,items, .... [TRUNCATED] 
-Adding missing grouping variables: `ClassCodes`
-# A tibble: 1 x 7
-# Groups:   ClassCodes [1]
-  ClassCodes Category items                                         support count cLift Classes
-  <chr>      <fct>    <chr>                                           <dbl> <int> <dbl> <chr>  
-1 BL,TE,SF   MRSA     Ceftaroline,Omadacycline,Trimethoprim.sulfam~ 0.00235     1  64.5 a,g,h  
+> greatest.cLift
+# A tibble: 5 x 4
+  items                                                                         count avgcLift Categories        
+  <chr>                                                                         <int>    <dbl> <chr>             
+1 Gentamicin,Tetracycline,Trimethoprim.sulfamethoxazole                             2     82.5 MRSA SA.pneum     
+2 Clindamycin,Telavancin,Telithromycin,Tetracycline                                 1     65.5 SA.SST            
+3 Ceftaroline,Omadacycline,Trimethoprim.sulfamethoxazole                            1     64.5 MRSA              
+4 Clindamycin,Telithromycin,Tetracycline                                            3     38.7 MSSA SA.SST SA2012
+5 Ciprofloxacin,Clarithromycin,Erythromycin,Levofloxacin,Moxifloxacin,Oxacillin     3     25.0 MRSA SA.SST SA2010
 
-> #demonstration of cLift calculation using BL-TE-SF in MRSA (ceftaroline, omadacycline, tri-sul)
-> #need to calculate the conditional support--the su .... [TRUNCATED] 
+> #demonstration of cLift calculation using ceftaroline, omadacycline, tri-sul in MRSA
+> #need to calculate the conditional support--the support (%R)  .... [TRUNCATED] 
         Ceft       Omad        TMZ expected.prev num.isol.req
 1 0.03409091 0.04545455 0.05681818         0.009     11357.87
 
+> #subnetwork analysis of clinda * tet * telavancin in MSSA
+> all.sets_combined_boot %>% filter(Category=="MSSA", LiftCrosses1==FALSE, str_detect(item .... [TRUNCATED] 
+  Category                                  items     support count       csr       lift        eSup      eCSR    eLift
+1     MSSA              Clindamycin,Telithromycin 0.025525526    17 0.5312500  20.812500 0.026073620 0.9482743 10.61359
+2     MSSA Clindamycin,Telithromycin,Tetracycline 0.009009009     6 0.3695652 106.351343 0.009022556 0.6914552 52.61606
+3     MSSA             Telithromycin,Tetracycline 0.009009009     6 0.3695652   5.109974 0.009287926 0.7291721  2.61423
+      cLift order Classes NumClasses ClassCodes cLiftBoot0.025 cLiftBoot0.975 LiftCrosses1
+1 17.473684     2     c,d          2      MC,LC      12.212632      30.729545        FALSE
+2 69.755525     3   c,d,g          3   MC,LC,TE      29.580338     168.750516        FALSE
+3  4.016227     2     c,g          2      MC,TE       1.722969       6.848758        FALSE
+
+> #subnetwork analysis of ceftaroline, gentamicin, omadacycline, tri-sul in MRSA
+> sub <- c("BL", "AG", "TE", "SF")
+
+> sub.combn <- c(apply(combn(sub,2), MARGIN =2, FUN=paste, collapse=","),
++                 apply(combn(sub,3), MARGIN =2, FUN=paste, collapse=","),
++ .... [TRUNCATED] 
+
+> all.sets_combined_boot %>% filter(Category=="MRSA", LiftCrosses1==FALSE, str_detect(items, "Ceftaroline|Gentamicin|Omadacycline|Trimethoprim.Sulfame ..." ... [TRUNCATED] 
+  Category                                                  items     support count       csr      lift        eSup
+1     MRSA                                 Ceftaroline,Gentamicin 0.018823529     8 0.8125000  4.086538 0.018867925
+2     MRSA                               Ceftaroline,Omadacycline 0.007058824     3 0.3076923  6.129808 0.007731959
+3     MRSA Ceftaroline,Omadacycline,Trimethoprim.sulfamethoxazole 0.002352941     1 0.3076923 54.274339 0.002352941
+4     MRSA                                Gentamicin,Omadacycline 0.004705882     2 0.2500000  3.320313 0.004950495
+5     MRSA  Gentamicin,Tetracycline,Trimethoprim.sulfamethoxazole 0.009411765     4 0.5000000 58.797201 0.009411765
+6     MRSA               Gentamicin,Trimethoprim.sulfamethoxazole 0.009411765     4 0.5000000  3.320313 0.009411765
+7     MRSA             Omadacycline,Trimethoprim.sulfamethoxazole 0.002352941     1 0.5000000  3.320313 0.002386635
+       eCSR     eLift     cLift order Classes NumClasses ClassCodes cLiftBoot0.025 cLiftBoot0.975 LiftCrosses1
+1 0.8463542  3.932329  4.049628     2     a,f          2      BL,AG       2.086626       6.800136        FALSE
+2 0.7132867  2.669310 11.000000     2     a,g          2      BL,TE       4.231277      29.166667        FALSE
+3 0.5907692 21.576923 64.533333     3   a,g,h          3   BL,TE,SF      26.911453     326.628720        FALSE
+4 0.6036932  1.446473  4.000000     2     g,f          2      AG,TE       1.438228      10.225000        FALSE
+5 0.5000000 57.967122 60.958681     3   g,f,h          3   AG,TE,SF      20.989137     125.004406        FALSE
+6 0.5000000  3.320313  3.320313     2     f,h          2      AG,SF       1.072145       6.386246        FALSE
+7 0.8282353  1.394690  2.200000     2     g,h          2      TE,SF       1.246181       8.450000        FALSE
+
 > #number of resistance patterns at drug level for MRSA and MSSA after eCSR and cLift filters
 > nrow(filter(all.sets_combined_boot, LiftCrosses1==FALS .... [TRUNCATED] 
-[1] 64
+[1] 120
 
 > nrow(filter(all.sets_combined_boot, LiftCrosses1==FALSE, Category=="MSSA"))
 [1] 10
 
-> #subnetwork analysis of BL-FQ-MC-LC-LG by infection site
-> #all possible combinations of the class codes from 2 to 5 way
-> sub1 <- c("BL", "FQ", "MC ..." ... [TRUNCATED] 
+> #subnetwork analysis of BL*FQ*MC by infection site
+> #all possible combinations of the resistances from 2 to 3 way
+> sub1 <- c("BL", "FQ", "MC")
 
 > sub1.combn <- c(apply(combn(sub1,2), MARGIN =2, FUN=paste, collapse=","),
 +                 apply(combn(sub1,3), MARGIN =2, FUN=paste, collapse=",") .... [TRUNCATED] 
 
 > filter(all.sets_combined_boot, LiftCrosses1==FALSE, ClassCodes %in% sub1.combn, Category %in% c("SA.SST", "SA.blood", "SA.pneum")) %>% group_by(Cate .... [TRUNCATED] 
-# A tibble: 3 x 2
-  Category n.pattern
-  <fct>        <int>
-1 SA.blood        43
-2 SA.pneum        30
-3 SA.SST          60
+`summarise()` ungrouping output (override with `.groups` argument)
+# A tibble: 3 x 3
+  Category n.pattern avg_cLift
+  <fct>        <int>     <dbl>
+1 SA.blood        39      3.51
+2 SA.pneum        28      4.11
+3 SA.SST          57      6.23
 
 > #oritavancin sets did not meet eCSR P-value <=0.05
 > summary(subset(SA2016_sets, items %in% "Oritavancin")) #minimum Pval.eCSR = 0.78
@@ -154,27 +185,20 @@ element (itemset/transaction) length distribution:sizes
   2.000   4.000   5.000   5.016   6.000   9.000 
 
 summary of quality measures:
-    support           count   CrossSupRatio          lift               eSup       
- Min.   :0.0122   Min.   :1   Min.   :0.01471   Min.   :   1.206   Min.   :0.0122  
- 1st Qu.:0.0122   1st Qu.:1   1st Qu.:0.01471   1st Qu.:  24.821   1st Qu.:0.0122  
- Median :0.0122   Median :1   Median :0.01471   Median : 101.846   Median :0.0122  
- Mean   :0.0122   Mean   :1   Mean   :0.02118   Mean   : 490.623   Mean   :0.0122  
- 3rd Qu.:0.0122   3rd Qu.:1   3rd Qu.:0.02174   3rd Qu.: 401.891   3rd Qu.:0.0122  
- Max.   :0.0122   Max.   :1   Max.   :0.16667   Max.   :9830.966   Max.   :0.0122  
-      eCSR             eLift              cLift            Pval.eCSR         Pval.CSR     
- Min.   :0.01471   Min.   :   1.206   Min.   :   1.206   Min.   :0.7800   Min.   :0.4800  
- 1st Qu.:0.01471   1st Qu.:  14.287   1st Qu.:  13.450   1st Qu.:0.9800   1st Qu.:0.9700  
- Median :0.01471   Median :  45.955   Median :  39.909   Median :1.0000   Median :1.0000  
- Mean   :0.01982   Mean   : 132.920   Mean   :  95.409   Mean   :0.9806   Mean   :0.9718  
- 3rd Qu.:0.02174   3rd Qu.: 143.609   3rd Qu.:  98.712   3rd Qu.:1.0000   3rd Qu.:1.0000  
- Max.   :0.07520   Max.   :2001.575   Max.   :1185.412   Max.   :1.0000   Max.   :1.0000  
-   Pval.eLift        Pval.lift         Pval.cLift     
- Min.   :0.00000   Min.   :0.00000   Min.   :0.00000  
- 1st Qu.:0.01350   1st Qu.:0.01400   1st Qu.:0.02200  
- Median :0.04600   Median :0.05000   Median :0.06000  
- Mean   :0.07423   Mean   :0.08725   Mean   :0.08553  
- 3rd Qu.:0.11000   3rd Qu.:0.12000   3rd Qu.:0.11500  
- Max.   :0.51000   Max.   :0.66000   Max.   :0.63000  
+    support           count   CrossSupRatio          lift               eSup             eCSR             eLift         
+ Min.   :0.0122   Min.   :1   Min.   :0.01471   Min.   :   1.206   Min.   :0.0122   Min.   :0.01471   Min.   :   1.206  
+ 1st Qu.:0.0122   1st Qu.:1   1st Qu.:0.01471   1st Qu.:  24.821   1st Qu.:0.0122   1st Qu.:0.01471   1st Qu.:  14.287  
+ Median :0.0122   Median :1   Median :0.01471   Median : 101.846   Median :0.0122   Median :0.01471   Median :  45.955  
+ Mean   :0.0122   Mean   :1   Mean   :0.02118   Mean   : 490.623   Mean   :0.0122   Mean   :0.01982   Mean   : 132.920  
+ 3rd Qu.:0.0122   3rd Qu.:1   3rd Qu.:0.02174   3rd Qu.: 401.891   3rd Qu.:0.0122   3rd Qu.:0.02174   3rd Qu.: 143.609  
+ Max.   :0.0122   Max.   :1   Max.   :0.16667   Max.   :9830.966   Max.   :0.0122   Max.   :0.07520   Max.   :2001.575  
+     cLift            Pval.eCSR         Pval.CSR        Pval.eLift        Pval.lift         Pval.cLift     
+ Min.   :   1.206   Min.   :0.7800   Min.   :0.4800   Min.   :0.00000   Min.   :0.00000   Min.   :0.00000  
+ 1st Qu.:  13.450   1st Qu.:0.9800   1st Qu.:0.9700   1st Qu.:0.01350   1st Qu.:0.01400   1st Qu.:0.02200  
+ Median :  39.909   Median :1.0000   Median :1.0000   Median :0.04600   Median :0.05000   Median :0.06000  
+ Mean   :  95.409   Mean   :0.9806   Mean   :0.9718   Mean   :0.07423   Mean   :0.08725   Mean   :0.08553  
+ 3rd Qu.:  98.712   3rd Qu.:1.0000   3rd Qu.:1.0000   3rd Qu.:0.11000   3rd Qu.:0.12000   3rd Qu.:0.11500  
+ Max.   :1185.412   Max.   :1.0000   Max.   :1.0000   Max.   :0.51000   Max.   :0.66000   Max.   :0.63000  
 
 includes transaction ID lists: FALSE 
 
@@ -192,6 +216,7 @@ mining info:
 
 > #diversity of class phenotypes and 3-class resistance patterns in MDR MRSA and MSSA
 > filter(m.mdr.classtable, !(NumClassRes %in% c("0", "1", "2"))) .... [TRUNCATED] 
+`summarise()` ungrouping output (override with `.groups` argument)
 # A tibble: 2 x 2
   Category MDR.uniq.pheno
   <fct>             <int>
@@ -199,10 +224,11 @@ mining info:
 2 MSSA                 23
 
 > filter(all.sets_combined_boot, LiftCrosses1==FALSE, NumClasses==3, Category %in% c("MRSA", "MSSA")) %>% group_by(Category) %>% dplyr::summarise(Num3 .... [TRUNCATED] 
+`summarise()` ungrouping output (override with `.groups` argument)
 # A tibble: 2 x 2
   Category Num3ClassPatterns
   <fct>                <int>
-1 MRSA                    21
+1 MRSA                    64
 2 MSSA                     1
 
 > #six-class and seven-class phenotypes in MRSA
@@ -216,58 +242,7 @@ mining info:
 
 > mrsa.6.7 <- filter(MDRprofiles[mrsa.index,], NumClass %in% c("6", "7"))
 
-> mrsa.6.7
-                                                                                                                                                                              Profile
-1                                                    Ciprofloxacin  Clindamycin   Ertapenem Erythromycin  Gentamicin Levofloxacin   Moxifloxacin   Oxacillin Penicillin    Telavancin
-2                                                             Ciprofloxacin  Clindamycin    Erythromycin  Gentamicin Levofloxacin   Moxifloxacin   Oxacillin Penicillin    Telavancin
-3                                   Ciprofloxacin  Clindamycin    Erythromycin   Levofloxacin   Moxifloxacin   Oxacillin Penicillin QuinDalfo   Telavancin Telithromycin Tetracycline
-4                                 Ceftaroline Ciprofloxacin  Clindamycin    Erythromycin   Levofloxacin   Moxifloxacin Omadacycline  Oxacillin Penicillin    Telavancin Telithromycin
-5                                               Ciprofloxacin  Clindamycin    Erythromycin  Gentamicin Levofloxacin   Moxifloxacin   Oxacillin Penicillin    Telavancin Telithromycin
-6  Ciprofloxacin  Clindamycin  Doxycycline  Erythromycin  Gentamicin Levofloxacin   Moxifloxacin   Oxacillin Penicillin     Telithromycin Tetracycline  Trimethoprim.sulfamethoxazole
-7                                             Ciprofloxacin  Clindamycin    Erythromycin   Levofloxacin   Moxifloxacin Omadacycline  Oxacillin Penicillin    Telavancin Telithromycin
-8                         Ciprofloxacin  Clindamycin    Erythromycin   Levofloxacin   Moxifloxacin   Oxacillin Penicillin    Telavancin Telithromycin   Trimethoprim.sulfamethoxazole
-9                               Ciprofloxacin Clarithromycin Clindamycin    Erythromycin   Levofloxacin   Moxifloxacin Omadacycline  Oxacillin Penicillin    Telavancin Telithromycin
-10          Ceftaroline Ciprofloxacin  Clindamycin    Erythromycin   Levofloxacin   Moxifloxacin Omadacycline  Oxacillin Penicillin     Telithromycin   Trimethoprim.sulfamethoxazole
-11                                                                         Azithromycin    Clindamycin    Erythromycin  Gentamicin Levofloxacin    Omadacycline  Oxacillin Penicillin
-12                                    Azithromycin    Clindamycin    Erythromycin  Gentamicin Levofloxacin      Oxacillin Penicillin      Tetracycline  Trimethoprim.sulfamethoxazole
-13                                  Azithromycin      Doxycycline  Erythromycin  Gentamicin Levofloxacin   Moxifloxacin   Oxacillin       Tetracycline  Trimethoprim.sulfamethoxazole
-14                                                  Clindamycin    Erythromycin  Gentamicin Levofloxacin   Moxifloxacin   Oxacillin       Tetracycline  Trimethoprim.sulfamethoxazole
-15                                                                                        Clindamycin    Erythromycin  Gentamicin Levofloxacin   Moxifloxacin Omadacycline  Oxacillin
-   NumRes NumClass                              Classes        Classes.sort
-1      10        6       b  d   a c  f b   b   a a    e    a, b, c, d, e, f
-2       9        6        b  d    c  f b   b   a a    e    a, b, c, d, e, f
-3      11        7    b  d    c   b   b   a a l   e c g a, b, c, d, e, g, l
-4      11        6    a b  d    c   b   b g  a a    e c    a, b, c, d, e, g
-5      10        6      b  d    c  f b   b   a a    e c    a, b, c, d, e, f
-6      12        7 b  d  g  c  f b   b   a a     c g  h a, b, c, d, f, g, h
-7      10        6      b  d    c   b   b g  a a    e c    a, b, c, d, e, g
-8      10        6   b  d    c   b   b   a a    e c   h    a, b, c, d, e, h
-9      11        6     b c d    c   b   b g  a a    e c    a, b, c, d, e, g
-10     11        6 a b  d    c   b   b g  a a     c   h    a, b, c, d, g, h
-11      8        6           c    d    c  f b    g  a a    a, b, c, d, f, g
-12      9        7  c    d    c  f b      a a      g  h a, b, c, d, f, g, h
-13      9        6  c      g  c  f b   b   a       g  h    a, b, c, f, g, h
-14      8        7       d    c  f b   b   a       g  h a, b, c, d, f, g, h
-15      7        6                 d    c  f b   b g  a    a, b, c, d, f, g
-
 > mrsa.index.6.7 <- mrsa.index & MDRprofiles[, "NumClass"] %in% c("6", "7") #index of the six-class and seven-class MRSA isolates
-
-> all_AM_panels[mrsa.index.6.7] #panels tested for those isolates. comparing mdrprofiles and panels shows that it is not necessarily different panels  .... [TRUNCATED] 
- [1] "Amoxicillin.clavulanic.acid Ampicillin Cefepime Ceftaroline Ceftazidime Ceftriaxone Ciprofloxacin Clindamycin Daptomycin Doripenem Ertapenem Erythromycin FusidicAcid Gentamicin Imipenem Levofloxacin Linezolid Meropenem Moxifloxacin Mupirocin Oritavancin Oxacillin Penicillin Piperacillin.tazobactam QuinDalfo Retapamulin Teicoplanin Telavancin Tetracycline Tigecycline Trimethoprim.sulfamethoxazole Vancomycin "                                                                               
- [2] "Amoxicillin.clavulanic.acid Ampicillin Cefepime Ceftaroline Ceftazidime Ceftriaxone Ciprofloxacin Clindamycin Daptomycin Doripenem Ertapenem Erythromycin FusidicAcid Gentamicin Imipenem Levofloxacin Linezolid Meropenem Moxifloxacin Mupirocin Oritavancin Oxacillin Penicillin Piperacillin.tazobactam QuinDalfo Retapamulin Teicoplanin Telavancin Tetracycline Tigecycline Trimethoprim.sulfamethoxazole Vancomycin "                                                                               
- [3] "Amoxicillin.clavulanic.acid Ampicillin Cefepime Ceftazidime Ceftriaxone Ciprofloxacin Clindamycin Daptomycin Doripenem Erythromycin Gentamicin Imipenem Levofloxacin Linezolid Meropenem Moxifloxacin Mupirocin Oxacillin Penicillin Piperacillin.tazobactam QuinDalfo Solithromycin Teicoplanin Telavancin Telithromycin Tetracycline Tigecycline Trimethoprim.sulfamethoxazole Vancomycin "                                                                                                             
- [4] "Amoxicillin.clavulanic.acid Ampicillin Cefepime Ceftaroline Ceftazidime Ceftazidime.avibactam Ceftriaxone Ciprofloxacin Clindamycin Daptomycin Doripenem Doxycycline Erythromycin FusidicAcid Gentamicin Imipenem Levofloxacin Linezolid Meropenem Moxifloxacin Mupirocin Omadacycline Oritavancin Oxacillin Penicillin Piperacillin.tazobactam QuinDalfo Solithromycin Teicoplanin Telavancin Telithromycin Tetracycline Tigecycline Trimethoprim.sulfamethoxazole Vancomycin "                          
- [5] "Amoxicillin.clavulanic.acid Ampicillin Cefepime Ceftaroline Ceftazidime Ceftazidime.avibactam Ceftriaxone Ciprofloxacin Clindamycin Daptomycin Doripenem Doxycycline Erythromycin FusidicAcid Gentamicin Imipenem Levofloxacin Linezolid Meropenem Moxifloxacin Mupirocin Omadacycline Oritavancin Oxacillin Penicillin Piperacillin.tazobactam QuinDalfo Solithromycin Teicoplanin Telavancin Telithromycin Tetracycline Tigecycline Trimethoprim.sulfamethoxazole Vancomycin "                          
- [6] "Amoxicillin.clavulanic.acid Ampicillin Cefepime Ceftaroline Ceftazidime Ceftazidime.avibactam Ceftriaxone Ciprofloxacin Clindamycin Daptomycin Doripenem Doxycycline Erythromycin FusidicAcid Gentamicin Imipenem Levofloxacin Linezolid Moxifloxacin Mupirocin Omadacycline Oritavancin Oxacillin Penicillin Piperacillin.tazobactam QuinDalfo Solithromycin Teicoplanin Telavancin Telithromycin Tetracycline Tigecycline Trimethoprim.sulfamethoxazole Vancomycin "                                    
- [7] "Amoxicillin.clavulanic.acid Ampicillin Cefepime Ceftaroline Ceftazidime Ceftazidime.avibactam Ceftriaxone Ciprofloxacin Clindamycin Daptomycin Doripenem Doxycycline Erythromycin FusidicAcid Gentamicin Imipenem Levofloxacin Linezolid Moxifloxacin Mupirocin Omadacycline Oritavancin Oxacillin Penicillin Piperacillin.tazobactam QuinDalfo Solithromycin Teicoplanin Telavancin Telithromycin Tetracycline Tigecycline Trimethoprim.sulfamethoxazole Vancomycin "                                    
- [8] "Amoxicillin.clavulanic.acid Ampicillin Cefepime Ceftaroline Ceftazidime Ceftazidime.avibactam Ceftriaxone Ciprofloxacin Clindamycin Daptomycin Doripenem Doxycycline Erythromycin FusidicAcid Gentamicin Imipenem Levofloxacin Linezolid Moxifloxacin Mupirocin Omadacycline Oritavancin Oxacillin Penicillin Piperacillin.tazobactam QuinDalfo Solithromycin Teicoplanin Telavancin Telithromycin Tetracycline Tigecycline Trimethoprim.sulfamethoxazole Vancomycin "                                    
- [9] "Amoxicillin.clavulanic.acid Ampicillin Cefepime Ceftaroline Ceftazidime Ceftazidime.avibactam Ceftriaxone Cefuroxime Ciprofloxacin Clarithromycin Clindamycin Daptomycin Doripenem Doxycycline Erythromycin FusidicAcid Gentamicin Imipenem Levofloxacin Linezolid Meropenem Moxifloxacin Mupirocin Omadacycline Oritavancin Oxacillin Penicillin Piperacillin.tazobactam QuinDalfo Solithromycin Teicoplanin Telavancin Telithromycin Tetracycline Tigecycline Trimethoprim.sulfamethoxazole Vancomycin "
-[10] "Amoxicillin.clavulanic.acid Ampicillin Cefepime Ceftaroline Ceftazidime Ceftazidime.avibactam Ceftriaxone Cefuroxime Ciprofloxacin Clindamycin Daptomycin Doripenem Doxycycline Erythromycin FusidicAcid Gentamicin Imipenem Levofloxacin Linezolid Meropenem Moxifloxacin Omadacycline Oritavancin Oxacillin Penicillin Piperacillin.tazobactam Solithromycin Teicoplanin Telavancin Telithromycin Tetracycline Tigecycline Trimethoprim.sulfamethoxazole Vancomycin "                                   
-[11] "Azithromycin Ceftaroline Ceftriaxone Clindamycin Daptomycin Doxycycline Erythromycin Gentamicin Levofloxacin Linezolid Minocycline Omadacycline Oritavancin Oxacillin Penicillin Piperacillin.tazobactam Solithromycin Tedizolid Teicoplanin Telavancin Tetracycline Tigecycline Trimethoprim.sulfamethoxazole Vancomycin "                                                                                                                                                                               
-[12] "Azithromycin Ceftaroline Ceftriaxone Clindamycin Daptomycin Doxycycline Erythromycin Gentamicin Levofloxacin Linezolid Minocycline Omadacycline Oritavancin Oxacillin Penicillin Piperacillin.tazobactam Solithromycin Tedizolid Teicoplanin Telavancin Tetracycline Tigecycline Trimethoprim.sulfamethoxazole Vancomycin "                                                                                                                                                                               
-[13] "Azithromycin Ceftaroline Ceftriaxone Clindamycin Daptomycin Doxycycline Erythromycin Gentamicin Levofloxacin Linezolid Minocycline Moxifloxacin Oritavancin Oxacillin Tedizolid Teicoplanin Telavancin Tetracycline Tigecycline Trimethoprim.sulfamethoxazole Vancomycin "                                                                                                                                                                                                                                
-[14] "Ceftaroline Ceftriaxone Clindamycin Daptomycin Doxycycline Erythromycin Gentamicin Levofloxacin Linezolid Minocycline Moxifloxacin Oritavancin Oxacillin Tedizolid Teicoplanin Telavancin Tetracycline Tigecycline Trimethoprim.sulfamethoxazole Vancomycin "                                                                                                                                                                                                                                             
-[15] "Ceftaroline Ceftriaxone Clindamycin Daptomycin Doxycycline Erythromycin Gentamicin Levofloxacin Linezolid Minocycline Moxifloxacin Omadacycline Oritavancin Oxacillin Tedizolid Teicoplanin Telavancin Tetracycline Tigecycline Trimethoprim.sulfamethoxazole Vancomycin "                                                                                                                                                                                                                                
 
 > Reduce(intersect, lapply(mrsa.6.7$Classes.sort, unlist)) #the 6-class and 7-class MRSA isolates...
 [1] "a" "b" "c"
@@ -275,468 +250,115 @@ mining info:
 > #have a background of B-lactam (a), FQ (b), macrolide (c) resistance (common to all)
 > 
 > #false negatives explain why not all expected cross-resist .... [TRUNCATED] 
-     items               support count CrossSupRatio         lift        eSup        eCSR        eLift      cLift Pval.eCSR Pval.CSR Pval.eLift Pval.lift Pval.cLift
-[1]  {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin}  0.025882353    11   0.057057057     5.423355 0.035714286 0.424500816    0.5675968   2.405596      0.06     0.56      0.560     0.260      0.330
-[2]  {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Oritavancin}   0.002352941     1   0.006006006   104.769362 0.002392344 0.006227901    7.7562511  10.497147      0.98     0.98      0.090     0.060      0.120
-[3]  {Ceftaroline,                                                                                                                                                  
-      Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin}  0.014117647     6   0.057057057    48.355090 0.015037594 0.080962713    3.7502753  10.497147      0.39     0.56      0.140     0.090      0.120
-[4]  {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Gentamicin,                                                                                                                                                   
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin}  0.002352941     1   0.057057057     6.548085 0.002481390 0.095660559    0.5237595   5.248574      0.33     0.56      0.580     0.240      0.190
-[5]  {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Telavancin}    0.011764706     5   0.057057057    20.147954 0.012224939 0.155448409    1.5879260   3.087396      0.21     0.56      0.240     0.140      0.270
-[6]  {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Penicillin}    0.025882353    11   0.050938338     6.179426 0.035714286 0.334123223    0.5675968   2.405596      0.12     0.65      0.560     0.240      0.330
-[7]  {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin}  0.025882353    11   0.049868766     6.049674 0.035714286 0.372709632    0.6331460   2.456779      0.08     0.66      0.520     0.250      0.320
-[8]  {Ceftaroline,                                                                                                                                                  
-      Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Oritavancin}   0.002352941     1   0.006006006  1712.576103 0.002386635 0.006227901  121.4229939  83.977176      0.98     0.98      0.012     0.012      0.026
-[9]  {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Oritavancin,                                                                                                                                                  
-      Telavancin}    0.002352941     1   0.006006006   856.288051 0.002358491 0.006227901   62.4953745  29.639003      0.98     0.98      0.020     0.017      0.060
-[10] {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Oritavancin,                                                                                                                                                  
-      Penicillin}    0.002352941     1   0.005361930   119.375278 0.002392344 0.004901961    7.7562511  10.497147      0.99     0.98      0.090     0.060      0.120
-[11] {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Oritavancin}   0.002352941     1   0.005249344   116.868710 0.002392344 0.005468066    8.6519862  10.720491      0.99     0.98      0.080     0.060      0.120
-[12] {Ceftaroline,                                                                                                                                                  
-      Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Telavancin}    0.009411765     4   0.057057057   263.473247 0.009501188 0.080962713   19.3663722  19.759336      0.39     0.56      0.045     0.038      0.080
-[13] {Ceftaroline,                                                                                                                                                  
-      Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Penicillin}    0.014117647     6   0.050938338    55.096282 0.015037594 0.063725490    3.7502753  10.497147      0.56     0.65      0.140     0.080      0.120
-[14] {Ceftaroline,                                                                                                                                                  
-      Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin}  0.014117647     6   0.049868766    53.939405 0.015037594 0.071084864    4.1833779  10.720491      0.48     0.66      0.130     0.090      0.120
-[15] {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Gentamicin,                                                                                                                                                   
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Telavancin}    0.002352941     1   0.057057057    53.518003 0.002358491 0.095660559    4.0687093  14.819502      0.33     0.56      0.130     0.090      0.100
-[16] {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Gentamicin,                                                                                                                                                   
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Penicillin}    0.002352941     1   0.050938338     7.460955 0.002481390 0.075294118    0.5237595   5.248574      0.44     0.65      0.580     0.220      0.190
-[17] {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Gentamicin,                                                                                                                                                   
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin}  0.002352941     1   0.049868766     7.304294 0.002481390 0.083989501    0.5842461   5.360245      0.38     0.66      0.550     0.230      0.190
-[18] {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Penicillin,                                                                                                                                                   
-      Telavancin}    0.011764706     5   0.050938338    22.956784 0.012224939 0.122352941    1.5879260   3.087396      0.26     0.65      0.240     0.130      0.270
-[19] {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Telavancin}    0.011764706     5   0.049868766    22.474752 0.012224939 0.136482940    1.7713085   3.153085      0.23     0.66      0.220     0.130      0.270
-[20] {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Penicillin}    0.025882353    11   0.049868766     6.893061 0.035714286 0.334123223    0.6331460   2.456779      0.12     0.66      0.520     0.230      0.320
-[21] {Ceftaroline,                                                                                                                                                  
-      Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Oritavancin,                                                                                                                                                  
-      Telavancin}    0.002352941     1   0.006006006 13997.016225 0.002358491 0.006227901  980.6966453 237.112027      0.98     0.98      0.000     0.001      0.012
-[22] {Ceftaroline,                                                                                                                                                  
-      Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Oritavancin,                                                                                                                                                  
-      Penicillin}    0.002352941     1   0.005361930  1951.326659 0.002386635 0.004901961  121.4229939  83.977176      0.99     0.98      0.012     0.012      0.026
-[23] {Ceftaroline,                                                                                                                                                  
-      Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Oritavancin}   0.002352941     1   0.005249344  1910.353920 0.002386635 0.005468066  135.4455968  85.763925      0.99     0.98      0.012     0.012      0.025
-[24] {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Oritavancin,                                                                                                                                                  
-      Penicillin,                                                                                                                                                   
-      Telavancin}    0.002352941     1   0.005361930   975.663329 0.002358491 0.004901961   62.4953745  29.639003      0.99     0.98      0.020     0.015      0.060
-[25] {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Oritavancin,                                                                                                                                                  
-      Telavancin}    0.002352941     1   0.005249344   955.176960 0.002358491 0.005468066   69.7126880  30.269620      0.99     0.98      0.018     0.016      0.060
-[26] {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Oritavancin,                                                                                                                                                  
-      Penicillin}    0.002352941     1   0.005249344   133.161399 0.002392344 0.004901961    8.6519862  10.720491      0.99     0.98      0.080     0.060      0.120
-[27] {Ceftaroline,                                                                                                                                                  
-      Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Penicillin,                                                                                                                                                   
-      Telavancin}    0.009411765     4   0.050938338   300.204101 0.009501188 0.063725490   19.3663722  19.759336      0.56     0.65      0.045     0.035      0.080
-[28] {Ceftaroline,                                                                                                                                                  
-      Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Telavancin}    0.009411765     4   0.049868766   293.900603 0.009501188 0.071084864   21.6029086  20.179747      0.48     0.66      0.042     0.036      0.080
-[29] {Ceftaroline,                                                                                                                                                  
-      Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Penicillin}    0.014117647     6   0.049868766    61.459107 0.015037594 0.063725490    4.1833779  10.720491      0.56     0.66      0.130     0.080      0.120
-[30] {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Gentamicin,                                                                                                                                                   
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Penicillin,                                                                                                                                                   
-      Telavancin}    0.002352941     1   0.050938338    60.978958 0.002358491 0.075294118    4.0687093  14.819502      0.44     0.65      0.130     0.080      0.100
-[31] {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Gentamicin,                                                                                                                                                   
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Telavancin}    0.002352941     1   0.049868766    59.698560 0.002358491 0.083989501    4.5385865  15.134810      0.38     0.66      0.120     0.080      0.090
-[32] {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Gentamicin,                                                                                                                                                   
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Penicillin}    0.002352941     1   0.049868766     8.322587 0.002481390 0.075294118    0.5842461   5.360245      0.44     0.66      0.550     0.210      0.190
-[33] {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Penicillin,                                                                                                                                                   
-      Telavancin}    0.011764706     5   0.049868766    25.607961 0.012224939 0.122352941    1.7713085   3.153085      0.26     0.66      0.220     0.120      0.270
-[34] {Ceftaroline,                                                                                                                                                  
-      Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Oritavancin,                                                                                                                                                  
-      Penicillin,                                                                                                                                                   
-      Telavancin}    0.002352941     1   0.005361930 15948.342884 0.002358491 0.004901961  980.6966453 237.112027      0.99     0.98      0.000     0.001      0.012
-[35] {Ceftaroline,                                                                                                                                                  
-      Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Oritavancin,                                                                                                                                                  
-      Telavancin}    0.002352941     1   0.005249344 15613.469542 0.002358491 0.005468066 1093.9529508 242.156964      0.99     0.98      0.000     0.001      0.012
-[36] {Ceftaroline,                                                                                                                                                  
-      Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Oritavancin,                                                                                                                                                  
-      Penicillin}    0.002352941     1   0.005249344  2176.676719 0.002386635 0.004901961  135.4455968  85.763925      0.99     0.98      0.012     0.011      0.025
-[37] {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Oritavancin,                                                                                                                                                  
-      Penicillin,                                                                                                                                                   
-      Telavancin}    0.002352941     1   0.005249344  1088.338360 0.002358491 0.004901961   69.7126880  30.269620      0.99     0.98      0.018     0.014      0.060
-[38] {Ceftaroline,                                                                                                                                                  
-      Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Penicillin,                                                                                                                                                   
-      Telavancin}    0.009411765     4   0.049868766   334.873341 0.009501188 0.063725490   21.6029086  20.179747      0.56     0.66      0.042     0.033      0.080
-[39] {Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Gentamicin,                                                                                                                                                   
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Penicillin,                                                                                                                                                   
-      Telavancin}    0.002352941     1   0.049868766    68.021147 0.002358491 0.075294118    4.5385865  15.134810      0.44     0.66      0.120     0.080      0.090
-[40] {Ceftaroline,                                                                                                                                                  
-      Ciprofloxacin,                                                                                                                                                
-      Clindamycin,                                                                                                                                                  
-      Ertapenem,                                                                                                                                                    
-      Erythromycin,                                                                                                                                                 
-      Levofloxacin,                                                                                                                                                 
-      Moxifloxacin,                                                                                                                                                 
-      Oritavancin,                                                                                                                                                  
-      Penicillin,                                                                                                                                                   
-      Telavancin}    0.002352941     1   0.005249344 17790.146261 0.002358491 0.004901961 1093.9529508 242.156964      0.99     0.98      0.000     0.001      0.012
+   Penicillin
+1        TRUE
+2        TRUE
+3        TRUE
+4        TRUE
+5        TRUE
+6        TRUE
+7        TRUE
+8        TRUE
+9        TRUE
+10       TRUE
+11       TRUE
+12       TRUE
+13       TRUE
+14       TRUE
+15       TRUE
+16       TRUE
+17       TRUE
+18       TRUE
+19       TRUE
 
-> ##the ertapenem sets generally include other B-lactams (penicillin, cefatroline; note oxacillin is not included as item in MRSA_db)
-> filter(MRSA_db .... [TRUNCATED] 
-   Azithromycin Ceftaroline Ciprofloxacin Clarithromycin Clindamycin Daptomycin Doxycycline
-1            NA       FALSE          TRUE             NA        TRUE      FALSE          NA
-2            NA       FALSE          TRUE             NA        TRUE      FALSE          NA
-3            NA       FALSE          TRUE             NA        TRUE      FALSE          NA
-4            NA        TRUE          TRUE             NA        TRUE      FALSE          NA
-5            NA        TRUE          TRUE             NA        TRUE      FALSE          NA
-6            NA        TRUE          TRUE             NA        TRUE      FALSE          NA
-7            NA       FALSE          TRUE             NA        TRUE      FALSE          NA
-8            NA       FALSE          TRUE             NA        TRUE      FALSE          NA
-9            NA        TRUE          TRUE             NA        TRUE      FALSE          NA
-10           NA        TRUE          TRUE             NA        TRUE      FALSE          NA
-11           NA        TRUE          TRUE             NA        TRUE      FALSE          NA
-   Ertapenem Erythromycin FusidicAcid Gentamicin Levofloxacin Linezolid Minocycline
-1       TRUE         TRUE       FALSE      FALSE         TRUE     FALSE          NA
-2       TRUE         TRUE       FALSE      FALSE         TRUE     FALSE          NA
-3       TRUE         TRUE       FALSE      FALSE         TRUE     FALSE          NA
-4       TRUE         TRUE       FALSE      FALSE         TRUE     FALSE          NA
-5       TRUE         TRUE       FALSE      FALSE         TRUE     FALSE          NA
-6       TRUE         TRUE       FALSE      FALSE         TRUE     FALSE          NA
-7       TRUE         TRUE       FALSE       TRUE         TRUE     FALSE          NA
-8       TRUE         TRUE       FALSE      FALSE         TRUE     FALSE          NA
-9       TRUE         TRUE       FALSE      FALSE         TRUE     FALSE          NA
-10      TRUE         TRUE       FALSE      FALSE         TRUE     FALSE          NA
-11      TRUE         TRUE       FALSE      FALSE         TRUE     FALSE          NA
-   Moxifloxacin Omadacycline Oritavancin Penicillin QuinDalfo Tedizolid Teicoplanin Telavancin
-1          TRUE           NA       FALSE       TRUE     FALSE        NA       FALSE      FALSE
-2          TRUE           NA       FALSE       TRUE     FALSE        NA       FALSE      FALSE
-3          TRUE           NA       FALSE       TRUE     FALSE        NA       FALSE      FALSE
-4          TRUE           NA       FALSE       TRUE     FALSE        NA       FALSE       TRUE
-5          TRUE           NA       FALSE       TRUE     FALSE        NA       FALSE       TRUE
-6          TRUE           NA       FALSE       TRUE     FALSE        NA       FALSE      FALSE
-7          TRUE           NA       FALSE       TRUE     FALSE        NA       FALSE       TRUE
-8          TRUE           NA       FALSE       TRUE     FALSE        NA       FALSE      FALSE
-9          TRUE           NA        TRUE       TRUE     FALSE        NA       FALSE       TRUE
-10         TRUE           NA       FALSE       TRUE     FALSE        NA       FALSE       TRUE
-11         TRUE           NA       FALSE       TRUE     FALSE        NA       FALSE      FALSE
-   Telithromycin Tetracycline Tigecycline Trimethoprim.sulfamethoxazole Vancomycin
-1             NA        FALSE       FALSE                         FALSE      FALSE
-2             NA        FALSE       FALSE                         FALSE      FALSE
-3             NA        FALSE       FALSE                         FALSE      FALSE
-4             NA        FALSE       FALSE                         FALSE      FALSE
-5             NA        FALSE       FALSE                         FALSE      FALSE
-6             NA        FALSE       FALSE                         FALSE      FALSE
-7             NA        FALSE       FALSE                         FALSE      FALSE
-8             NA        FALSE       FALSE                         FALSE      FALSE
-9             NA        FALSE       FALSE                         FALSE      FALSE
-10            NA        FALSE       FALSE                         FALSE      FALSE
-11            NA        FALSE       FALSE                         FALSE      FALSE
+> ##eCSR P-val of ertapenem-penicillin sets all > 0.05
+> summary(subset(MRSA_sets, items %ain% c("Ertapenem", "Penicillin")))@quality
+    support             count        CrossSupRatio           lift                eSup               eCSR         
+ Min.   :0.002353   Min.   : 1.000   Min.   :0.004706   Min.   :    0.796   Min.   :0.002358   Min.   :0.004902  
+ 1st Qu.:0.002353   1st Qu.: 1.000   1st Qu.:0.005249   1st Qu.:    6.970   1st Qu.:0.002364   1st Qu.:0.004902  
+ Median :0.002353   Median : 1.000   Median :0.044706   Median :   28.635   Median :0.002445   Median :0.063726  
+ Mean   :0.008041   Mean   : 3.418   Mean   :0.031400   Mean   :  751.057   Mean   :0.013422   Mean   :0.074784  
+ 3rd Qu.:0.011765   3rd Qu.: 5.000   3rd Qu.:0.049869   3rd Qu.:  233.076   3rd Qu.:0.012225   3rd Qu.:0.075294  
+ Max.   :0.044706   Max.   :19.000   Max.   :0.050938   Max.   :17790.146   Max.   :0.395833   Max.   :0.395833  
+     eLift               cLift            Pval.eCSR         Pval.CSR        Pval.eLift       Pval.lift     
+ Min.   :   0.0849   Min.   :  0.9675   Min.   :0.0600   Min.   :0.5800   Min.   :0.0000   Min.   :0.0010  
+ 1st Qu.:   0.6599   1st Qu.:  2.9576   1st Qu.:0.4100   1st Qu.:0.6000   1st Qu.:0.0480   1st Qu.:0.0410  
+ Median :   2.3353   Median :  6.7519   Median :0.5200   Median :0.6700   Median :0.1800   Median :0.1150  
+ Mean   :  54.6257   Mean   : 21.6894   Mean   :0.6323   Mean   :0.7652   Mean   :0.2808   Mean   :0.1666  
+ 3rd Qu.:  16.9757   3rd Qu.: 15.4676   3rd Qu.:0.9900   3rd Qu.:0.9800   3rd Qu.:0.5125   3rd Qu.:0.2300  
+ Max.   :1093.9530   Max.   :242.1570   Max.   :0.9900   Max.   :0.9800   Max.   :0.9300   Max.   :0.8800  
+   Pval.cLift    
+ Min.   :0.0120  
+ 1st Qu.:0.0900  
+ Median :0.1600  
+ Mean   :0.2089  
+ 3rd Qu.:0.2800  
+ Max.   :0.7700  
 
-> filter(SA.db, Ertapenem==TRUE) %>% select(Penicillin, Ceftaroline)
-   Penicillin Ceftaroline
-1        TRUE       FALSE
-2        TRUE       FALSE
-3        TRUE       FALSE
-4        TRUE       FALSE
-5        TRUE       FALSE
-6        TRUE        TRUE
-7        TRUE        TRUE
-8        TRUE        TRUE
-9        TRUE       FALSE
-10       TRUE       FALSE
-11       TRUE       FALSE
-12       TRUE       FALSE
-13       TRUE       FALSE
-14       TRUE       FALSE
-15       TRUE       FALSE
-16       TRUE       FALSE
-17       TRUE        TRUE
-18       TRUE        TRUE
-19       TRUE        TRUE
+> summary(subset(SA.SST_sets, items %ain% c("Ertapenem", "Penicillin")))@quality
+    support             count       CrossSupRatio          lift                eSup               eCSR        
+ Min.   :0.001852   Min.   :1.000   Min.   :0.01485   Min.   :     1.34   Min.   :0.001859   Min.   :0.01836  
+ 1st Qu.:0.001852   1st Qu.:1.000   1st Qu.:0.01485   1st Qu.:    54.00   1st Qu.:0.001873   1st Qu.:0.01836  
+ Median :0.003704   Median :2.000   Median :0.01485   Median :   341.27   Median :0.003781   Median :0.05231  
+ Mean   :0.003718   Mean   :2.008   Mean   :0.01485   Mean   :  5656.99   Mean   :0.004474   Mean   :0.06701  
+ 3rd Qu.:0.003704   3rd Qu.:2.000   3rd Qu.:0.01485   3rd Qu.:  2660.74   3rd Qu.:0.004028   3rd Qu.:0.10096  
+ Max.   :0.011111   Max.   :6.000   Max.   :0.01485   Max.   :219412.23   Max.   :0.061856   Max.   :0.14504  
+     eLift               cLift            Pval.eCSR         Pval.CSR     Pval.eLift        Pval.lift      
+ Min.   :    0.288   Min.   :   1.119   Min.   :0.3900   Min.   :0.9   Min.   :0.00000   Min.   :0.00000  
+ 1st Qu.:    3.635   1st Qu.:  10.382   1st Qu.:0.5475   1st Qu.:0.9   1st Qu.:0.02075   1st Qu.:0.01600  
+ Median :   19.969   Median :  40.091   Median :0.7500   Median :0.9   Median :0.08000   Median :0.06000  
+ Mean   :  289.691   Mean   : 201.016   Mean   :0.6975   Mean   :0.9   Mean   :0.15236   Mean   :0.08484  
+ 3rd Qu.:  158.093   3rd Qu.: 172.449   3rd Qu.:0.9000   3rd Qu.:0.9   3rd Qu.:0.19250   3rd Qu.:0.12000  
+ Max.   :10199.668   Max.   :3668.093   Max.   :0.9000   Max.   :0.9   Max.   :0.82000   Max.   :0.64000  
+   Pval.cLift     
+ Min.   :0.00200  
+ 1st Qu.:0.03425  
+ Median :0.09000  
+ Mean   :0.12161  
+ 3rd Qu.:0.18000  
+ Max.   :0.69000  
 
-> ##all the isolates with ertapenem R also have penicillin R. Only some ertapenem R also have ceftaroline R
-> filter(SA.db, Ceftaroline==TRUE) %>% sel .... [TRUNCATED] 
-   Penicillin Ertapenem
-1        TRUE      TRUE
-2        TRUE      TRUE
-3        TRUE      TRUE
-4        TRUE      TRUE
-5        TRUE      TRUE
-6        TRUE      TRUE
-7        TRUE        NA
-8        TRUE        NA
-9        TRUE        NA
-10       TRUE        NA
-11       TRUE        NA
-12       TRUE        NA
-13       TRUE        NA
-14       TRUE        NA
-15       TRUE        NA
-16       TRUE        NA
-17       TRUE        NA
-18       TRUE        NA
-19       TRUE        NA
-20       TRUE        NA
-21       TRUE        NA
-22       TRUE        NA
-23         NA        NA
-24         NA        NA
-25         NA        NA
-26         NA        NA
+> summary(subset(SA.blood_sets, items %ain% c("Ertapenem", "Penicillin")))@quality
+    support             count       CrossSupRatio          lift               eSup               eCSR        
+ Min.   :0.004167   Min.   :1.000   Min.   :0.01136   Min.   :     1.4   Min.   :0.004167   Min.   :0.01023  
+ 1st Qu.:0.004167   1st Qu.:1.000   1st Qu.:0.01136   1st Qu.:    55.3   1st Qu.:0.004167   1st Qu.:0.01023  
+ Median :0.004167   Median :1.000   Median :0.04545   Median :   245.8   Median :0.004237   Median :0.04091  
+ Mean   :0.008523   Mean   :2.045   Mean   :0.03306   Mean   :  9401.2   Mean   :0.009761   Mean   :0.07605  
+ 3rd Qu.:0.012500   3rd Qu.:3.000   3rd Qu.:0.04545   3rd Qu.:  1735.0   3rd Qu.:0.012766   3rd Qu.:0.06648  
+ Max.   :0.033333   Max.   :8.000   Max.   :0.04545   Max.   :623108.7   Max.   :0.117647   Max.   :0.29752  
+     eLift              cLift            Pval.eCSR         Pval.CSR        Pval.eLift       Pval.lift      
+ Min.   :    0.41   Min.   :   1.179   Min.   :0.2900   Min.   :0.8000   Min.   :0.0000   Min.   :0.00000  
+ 1st Qu.:    6.44   1st Qu.:  14.947   1st Qu.:0.6700   1st Qu.:0.8000   1st Qu.:0.0100   1st Qu.:0.00400  
+ Median :   27.89   Median :  38.020   Median :0.8600   Median :0.8000   Median :0.0465   Median :0.01900  
+ Mean   :  949.73   Mean   : 221.510   Mean   :0.7814   Mean   :0.8691   Mean   :0.1071   Mean   :0.04504  
+ 3rd Qu.:  184.83   3rd Qu.: 131.704   3rd Qu.:1.0000   3rd Qu.:0.9900   3rd Qu.:0.1400   3rd Qu.:0.06000  
+ Max.   :57634.14   Max.   :6919.668   Max.   :1.0000   Max.   :0.9900   Max.   :0.8500   Max.   :0.62000  
+   Pval.cLift     
+ Min.   :0.00000  
+ 1st Qu.:0.01900  
+ Median :0.06000  
+ Mean   :0.08367  
+ 3rd Qu.:0.12000  
+ Max.   :0.68000  
 
-> ##all ceftaroline R are resistant to Penicillin and Ertapenem (excluding missing data)
-> summary(subset(MRSA_sets, items %ain% c("Ertapenem", "Clind ..." ... [TRUNCATED] 
-set of 20 itemsets
+> summary(subset(SA.pneum_sets, items %ain% c("Ertapenem", "Penicillin")))@quality
+    support             count      CrossSupRatio          lift                eSup               eCSR        
+ Min.   :0.004630   Min.   :1.00   Min.   :0.02564   Min.   :     1.38   Min.   :0.004630   Min.   :0.04861  
+ 1st Qu.:0.004630   1st Qu.:1.00   1st Qu.:0.02564   1st Qu.:    66.66   1st Qu.:0.004662   1st Qu.:0.04861  
+ Median :0.004630   Median :1.00   Median :0.02564   Median :   298.60   Median :0.004796   Median :0.04872  
+ Mean   :0.008102   Mean   :1.75   Mean   :0.02564   Mean   :  4655.60   Mean   :0.009877   Mean   :0.10704  
+ 3rd Qu.:0.008102   3rd Qu.:1.75   3rd Qu.:0.02564   3rd Qu.:  1648.34   3rd Qu.:0.008859   3rd Qu.:0.08794  
+ Max.   :0.018519   Max.   :4.00   Max.   :0.02564   Max.   :191279.72   Max.   :0.105263   Max.   :0.35897  
+     eLift              cLift            Pval.eCSR         Pval.CSR      Pval.eLift        Pval.lift         Pval.cLift    
+ Min.   :   0.243   Min.   :   1.083   Min.   :0.2000   Min.   :0.95   Min.   :0.00000   Min.   :0.00000   Min.   :0.0040  
+ 1st Qu.:   3.135   1st Qu.:   7.581   1st Qu.:0.7225   1st Qu.:0.95   1st Qu.:0.04375   1st Qu.:0.01200   1st Qu.:0.0565  
+ Median :  11.792   Median :  17.266   Median :0.8500   Median :0.95   Median :0.13000   Median :0.04200   Median :0.1300  
+ Mean   : 149.348   Mean   :  79.244   Mean   :0.7050   Mean   :0.95   Mean   :0.20361   Mean   :0.07206   Mean   :0.1542  
+ 3rd Qu.:  69.336   3rd Qu.:  64.188   3rd Qu.:0.8500   3rd Qu.:0.95   3rd Qu.:0.26250   3rd Qu.:0.10000   3rd Qu.:0.2200  
+ Max.   :5365.858   Max.   :1027.377   Max.   :0.8500   Max.   :0.95   Max.   :0.91000   Max.   :0.65000   Max.   :0.7400  
 
-most frequent items:
-Ciprofloxacin   Clindamycin     Ertapenem  Levofloxacin  Moxifloxacin       (Other) 
-           20            20            20            20            20            60 
-
-element (itemset/transaction) length distribution:sizes
- 6  7  8  9 10 
- 1  5  8  5  1 
-
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-      6       7       8       8       9      10 
-
-summary of quality measures:
-    support             count      CrossSupRatio           lift                eSup         
- Min.   :0.002353   Min.   : 1.0   Min.   :0.005249   Min.   :    6.179   Min.   :0.002358  
- 1st Qu.:0.002353   1st Qu.: 1.0   1st Qu.:0.005362   1st Qu.:   24.945   1st Qu.:0.002358  
- Median :0.002353   Median : 1.0   Median :0.049869   Median :   93.698   Median :0.002437  
- Mean   :0.007529   Mean   : 3.2   Mean   :0.032364   Mean   : 2057.054   Mean   :0.008681  
- 3rd Qu.:0.011765   3rd Qu.: 5.0   3rd Qu.:0.050938   3rd Qu.: 1003.832   3rd Qu.:0.012225  
- Max.   :0.025882   Max.   :11.0   Max.   :0.050938   Max.   :17790.146   Max.   :0.035714  
-      eCSR              eLift               cLift           Pval.eCSR        Pval.CSR    
- Min.   :0.004902   Min.   :   0.5238   Min.   :  2.406   Min.   :0.120   Min.   :0.650  
- 1st Qu.:0.004902   1st Qu.:   1.7255   1st Qu.:  5.332   1st Qu.:0.440   1st Qu.:0.650  
- Median :0.063726   Median :   6.1474   Median : 12.770   Median :0.560   Median :0.660  
- Mean   :0.075412   Mean   : 127.1656   Mean   : 42.148   Mean   :0.634   Mean   :0.785  
- 3rd Qu.:0.075294   3rd Qu.:  64.2997   3rd Qu.: 29.797   3rd Qu.:0.990   3rd Qu.:0.980  
- Max.   :0.334123   Max.   :1093.9530   Max.   :242.157   Max.   :0.990   Max.   :0.980  
-   Pval.eLift       Pval.lift         Pval.cLift    
- Min.   :0.0000   Min.   :0.00100   Min.   :0.0120  
- 1st Qu.:0.0195   1st Qu.:0.01475   1st Qu.:0.0600  
- Median :0.1050   Median :0.07000   Median :0.1100  
- Mean   :0.1754   Mean   :0.08560   Mean   :0.1298  
- 3rd Qu.:0.2250   3rd Qu.:0.12250   3rd Qu.:0.1900  
- Max.   :0.5800   Max.   :0.24000   Max.   :0.3300  
-
-includes transaction ID lists: FALSE 
-
-mining info:
- data ntransactions     support confidence
- data           425 0.002352941          1
-
-> ##eCSR P-val all > 0.05
-> 
-> #ceftaroline*TMS association in skin/soft tissue: count(n), cLift
-> filter(all.sets_combined_boot, Category=="SA.SST",  .... [TRUNCATED] 
-  Category                                     items     support count csr   lift        eSup
-1   SA.SST Ceftaroline,Trimethoprim.sulfamethoxazole 0.001851852     1   1 8.4375 0.001855288
-       eCSR    eLift    cLift order Classes NumClasses ClassCodes cLiftBoot0.025
-1 0.9166667 7.748724 8.839286     2     a,h          2      BL,SF       4.110795
-  cLiftBoot0.975 LiftCrosses1
-1       36.53143        FALSE
-
-> #association sets recovered from most common resistance phenotypes
-> common.pheno <- names(sort(table(MDRprofiles$Profile), decreasing=TRUE)[1:20])
+> #association sets recovered from most common resistance phenotypes (Table2)
+> common.pheno <- names(sort(table(MDRprofiles$Profile), decreasing=TRUE .... [TRUNCATED] 
 
 > common.pheno <- gsub("\\s+", ",", gsub("^\\s+|\\s+$", "", common.pheno))
 
@@ -770,6 +392,14 @@ mining info:
 
 > table2$Recovered_Resistance_Pattern[!str_detect(table2$Resistance_Phenotype, " ")] <- "*" #if pattern is <2 antimicrobials, pattern cannot be recove .... [TRUNCATED] 
 
+> AM_abbreviation_replace <- unlist(as.character(AM_class$Abbreviation))#for turning long AM name to abbreviation with str_replace
+
+> names(AM_abbreviation_replace) <- as.character(AM_class$AM)
+
+> table2$Resistance_Phenotype <- str_replace_all(as.character(table2$Resistance_Phenotype), AM_abbreviation_replace) #use AM abbreviations
+
+> table2$Resistance_Phenotype <- gsub("\\s+",", ",table2$Resistance_Phenotype) #trim ws between abbreviations
+
 > write.xlsx(table2, "results/Table 2_most common MDR phenotypes.xlsx", row.names=FALSE)
 
 > #number of common resistance phenotypes
@@ -778,7 +408,7 @@ mining info:
 
 > #number of common resistance phenotypes with at least a partial set recovered
 > sum(recovered3)
-[1] 15
+[1] 16
 
 > #erythromycin*penicillin sets
 > #number of common phenotypes with erythromycin*penicillin
@@ -805,85 +435,15 @@ mining info:
 4 SA2014 2.054082
 5 SA2015 1.659234
 
-> ######Sup Table 2, values copied into Word
-> #effect of eCSR and cLift filters on number of rules and itemset order
-> #pre-filtering
-> prefilter.set .... [TRUNCATED] 
-
-> prefilter.sets_combined <- itemset_to_class_set(prefilter.sets_combined, AM_class)
-
-> prefilter.sets_combined %>% mutate(Analysis = case_when(
-+   Category %in% varNames ==TRUE ~ "Year",
-+   Category %in% mvarNames ==TRUE ~ "MRSA.v.MS ..." ... [TRUNCATED] 
-# A tibble: 3 x 9
-  Analysis          n avg.n avg.order min.order max.order avg.class min.class max.class
-  <chr>         <int> <dbl>     <dbl>     <dbl>     <dbl>     <dbl>     <dbl>     <dbl>
-1 InfectionType 20823 5206.      5.65         2        12      4.10         1         7
-2 MRSA.v.MSSA    7813 3906.      5.29         2        11      4.05         1         7
-3 Year          23131 2103.      5.44         2        12      4.01         1         7
-
-> #post-filtering with eCSR
-> all.sets_combined_boot %>% mutate(Analysis = case_when(
-+   Category %in% varNames ==TRUE ~ "Year",
-+   Category %in% mv .... [TRUNCATED] 
-# A tibble: 3 x 9
-  Analysis          n avg.n avg.order min.order max.order avg.class min.class max.class
-  <chr>         <int> <dbl>     <dbl>     <dbl>     <dbl>     <dbl>     <dbl>     <dbl>
-1 InfectionType   208  52        2.92         2         6      2.16         1         4
-2 MRSA.v.MSSA     125  62.5      3.05         2         6      2.2          1         3
-3 Year            254  23.1      2.78         2         6      2.07         1         3
-
-> #post-filtering with eCSR and cLift
-> all.sets_combined_boot %>% filter(LiftCrosses1==FALSE) %>% mutate(Analysis = case_when(
-+   Category %in% varN .... [TRUNCATED] 
-# A tibble: 3 x 9
-  Analysis          n avg.n avg.order min.order max.order avg.class min.class max.class
-  <chr>         <int> <dbl>     <dbl>     <dbl>     <dbl>     <dbl>     <dbl>     <dbl>
-1 InfectionType   169  42.2      2.91         2         6      2.14         1         4
-2 MRSA.v.MSSA      74  37        3.12         2         6      2.14         1         3
-3 Year            233  21.2      2.85         2         6      2.08         1         3
-
-> ### 1-10-20
-> filter(SA.db, Ceftaroline==TRUE, Trimethoprim.sulfamethoxazole==TRUE)
-  Collection.Number Isolate.Number Objective Study.Year Bank.Number     Infection.Source
-1            700801          46053         D       2011       43165 Wound/Drainage/Ulcer
-              Infection.Type Nosocomial Admit.Date Age Gender Culture.Date
-1 skin/soft tissue infection       <NA>       <NA>  81      M   2011-12-01
-         Specimen.Type  VAP  ICU Azithromycin Ceftaroline Ciprofloxacin Clarithromycin
-1 Wound/Drainage/Ulcer <NA> <NA>           NA        TRUE          TRUE             NA
-  Clindamycin Daptomycin Doxycycline Ertapenem Erythromycin FusidicAcid Gentamicin
-1        TRUE      FALSE       FALSE        NA         TRUE       FALSE      FALSE
-  Levofloxacin Linezolid Minocycline Moxifloxacin Omadacycline Oritavancin Oxacillin
-1         TRUE     FALSE          NA         TRUE         TRUE       FALSE      TRUE
-  Penicillin QuinDalfo Tedizolid Teicoplanin Telavancin Telithromycin Tetracycline Tigecycline
-1       TRUE        NA        NA       FALSE      FALSE          TRUE        FALSE       FALSE
-  Trimethoprim.sulfamethoxazole Vancomycin
-1                          TRUE      FALSE
-
-> filter(SA.db, Telavancin==TRUE) %>% write.xlsx("results/Telavancin NS.xlsx")
-
-> #1-29-20
-> #TMS-tetracycline resistance in MRSA
-> filter(all.sets_combined_boot, Category=="MRSA", items=="Omadacycline,Tetracycline,Trimethoprim.su ..." ... [TRUNCATED] 
- [1] Category       items          support        count          csr            lift          
- [7] eSup           eCSR           eLift          cLift          order          Classes       
-[13] NumClasses     ClassCodes     cLiftBoot0.025 cLiftBoot0.975 LiftCrosses1  
-<0 rows> (or 0-length row.names)
-
+> #Trisul-tetracycline resistance in MRSA
 > filter(all.sets_combined_boot, Category=="MRSA", items=="Tetracycline,Trimethoprim.sulfamethoxazole")
-  Category                                      items     support count       csr     lift
-1     MRSA Tetracycline,Trimethoprim.sulfamethoxazole 0.009411765     4 0.6666667 4.427083
-         eSup      eCSR    eLift    cLift order Classes NumClasses ClassCodes cLiftBoot0.025
-1 0.009433962 0.6572549 4.374877 4.655556     2     g,h          2      TE,SF       1.463432
-  cLiftBoot0.975 LiftCrosses1
-1       9.547721        FALSE
+  Category                                      items     support count       csr     lift        eSup      eCSR    eLift
+1     MRSA Tetracycline,Trimethoprim.sulfamethoxazole 0.009411765     4 0.6666667 4.427083 0.009433962 0.6572549 4.374877
+     cLift order Classes NumClasses ClassCodes cLiftBoot0.025 cLiftBoot0.975 LiftCrosses1
+1 4.655556     2     g,h          2      TE,SF       1.463432       9.547721        FALSE
 
-> filter(all.sets_combined_boot, Category=="MRSA", items=="Omadacycline,Trimethoprim.sulfamethoxazole")
-  Category                                      items     support count csr     lift
-1     MRSA Omadacycline,Trimethoprim.sulfamethoxazole 0.002352941     1 0.5 3.320313
-         eSup      eCSR   eLift cLift order Classes NumClasses ClassCodes cLiftBoot0.025
-1 0.002386635 0.8282353 1.39469   2.2     2     g,h          2      TE,SF       1.246181
-  cLiftBoot0.975 LiftCrosses1
-1           8.45        FALSE
+> #number of potential association sets
+> 2^(nrow(AM_class))-1
+[1] 268435455
 
 > sink()

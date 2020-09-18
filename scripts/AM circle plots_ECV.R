@@ -1,14 +1,14 @@
 # ---
 # title: "Circle Plots"
 # author: "Casey Cazer"
-# Last updated: Sep 16, 2020
+# Last updated: May 4, 2020
 # ---
 
 
 ###########SET UP ##############
 #For plots using specific AM
 #get coordinates for vetices
-  good.coords <- as.matrix(read.xlsx("data/circle graph coordinates_reduced vertex.xlsx", sheetName = "Sheet1", colIndex=c(1:2)))
+  good.coords <- as.matrix(read.xlsx("data/circle graph coordinates_reduced vertex_ECV.xlsx", sheetName = "Sheet1", colIndex=c(1:2)))
   colnames(good.coords) <- NULL
 
 #need vertex dataframe of vertex attributes
@@ -19,12 +19,16 @@
 
 #nice labels
 vertices$label <- vertices$Abbreviation
+vertices$label <- dplyr::recode(vertices$label, 
+                         "Trimethoprim.sulfamethoxazole"="Trimethoprim \n Sulfamethoxazole", 
+                         "FusidicAcid"="Fusidic \n Acid", 
+                         "QuinDalfo"="Quinupristin \n Dalfopristin")
 
 #vertex colors
 #nice colors for colorblindness
 #http://mkweb.bcgsc.ca/colorblind/
 #https://shared-assets.adobe.com/link/21f9419a-625f-4863-7a02-f9eb22784f45
-colors <- c("#FCAE91", "#CD913C", "#46AA96",  "#F569D7", "#EFF3FF", "#08519C", "#A03764", "#5F820A", "#A05FBE", "#A50F15", "#193C37")
+colors <- c("#FCAE91", "#CD913C", "#46AA96",  "#F569D7", "#EFF3FF", "#08519C", "#A03764", "#5F820A", "#A05FBE", "#A50F15", "#193C37", "000000")
 names(colors) <- levels(vertices$Code)
 vertices$color <- colors[match(vertices$Code, names(colors))] #color by AM class
 
@@ -108,7 +112,7 @@ graph$layout <- good.coords
 
 #save as png to maintain proportions across graphs
 #individual circle graphs are 7x8 inches
-  filename <- paste('./figures/', 'Fig4_', LETTERS[i], '_', varNames[i], '_AMsets_cLift.png', sep="")
+  filename <- paste('./figures/', 'FigS3_', LETTERS[i], '_', varNames[i], '_AMsets_cLift_ECV.png', sep="")
   Cairo(file=filename, type="png", units="in", width=7, height=8, pointsize=8, res=300)
   plot.new()
   par(cex.main=4)
@@ -119,32 +123,32 @@ graph$layout <- good.coords
 
 #plot together
 #two figures required to accomodate all years
-filename <- "figures/Fig4_Year AM sets_1.png"
+filename <- "figures/FigS3_Year AM sets_1_ECV.png"
 
 #arrange on grid, each circle graph is 3x3 in
 Cairo(file=filename, type="png", units="in", width=9, height=6, pointsize=8, res=300)
 plot.new()
-grid.arrange(rasterGrob(readPNG("figures/Fig4_A_SA2008_AMsets_cLift.png")),
-             rasterGrob(readPNG("figures/Fig4_B_SA2009_AMsets_cLift.png")),
-             rasterGrob(readPNG("figures/Fig4_C_SA2010_AMsets_cLift.png")),
-             rasterGrob(readPNG("figures/Fig4_D_SA2011_AMsets_cLift.png")),
-             rasterGrob(readPNG("figures/Fig4_E_SA2012_AMsets_cLift.png")),
-             rasterGrob(readPNG("figures/Fig4_F_SA2013_AMsets_cLift.png")),
+grid.arrange(rasterGrob(readPNG("figures/FigS3_A_SA2008_AMsets_cLift_ECV.png")),
+             rasterGrob(readPNG("figures/FigS3_B_SA2009_AMsets_cLift_ECV.png")),
+             rasterGrob(readPNG("figures/FigS3_C_SA2010_AMsets_cLift_ECV.png")),
+             rasterGrob(readPNG("figures/FigS3_D_SA2011_AMsets_cLift_ECV.png")),
+             rasterGrob(readPNG("figures/FigS3_E_SA2012_AMsets_cLift_ECV.png")),
+             rasterGrob(readPNG("figures/FigS3_F_SA2013_AMsets_cLift_ECV.png")),
              ncol=3, nrow=2)
 
 dev.off()
 
 
 
-filename <- "figures/Fig4_Year AM sets_2.png"
+filename <- "figures/FigS3_Year AM sets_2_ECV.png"
 
 Cairo(file=filename, type="png", units="in", width=9, height=6, pointsize=8, res=300)
 plot.new()
-grid.arrange(rasterGrob(readPNG("figures/Fig4_G_SA2014_AMsets_cLift.png")),
-             rasterGrob(readPNG("figures/Fig4_H_SA2015_AMsets_cLift.png")),
-             rasterGrob(readPNG("figures/Fig4_I_SA2016_AMsets_cLift.png")),
-             rasterGrob(readPNG("figures/Fig4_J_SA2017_AMsets_cLift.png")),
-             rasterGrob(readPNG("figures/Fig4_K_SA2018_AMsets_cLift.png")),
+grid.arrange(rasterGrob(readPNG("figures/FigS3_G_SA2014_AMsets_cLift_ECV.png")),
+             rasterGrob(readPNG("figures/FigS3_H_SA2015_AMsets_cLift_ECV.png")),
+             rasterGrob(readPNG("figures/FigS3_I_SA2016_AMsets_cLift_ECV.png")),
+             rasterGrob(readPNG("figures/FigS3_J_SA2017_AMsets_cLift_ECV.png")),
+             rasterGrob(readPNG("figures/FigS3_K_SA2018_AMsets_cLift_ECV.png")),
              ncol=3, nrow=2)
 dev.off()
 
@@ -203,7 +207,7 @@ label <- paste("g_AM_", mvarNames[i], sep="")
 assign(label, graph)
 
 #save as png to maintain proportions across graphs
-filename <- paste('./figures/', 'Fig2_', if(i==2){LETTERS[1]}else{LETTERS[2]}, '_',  mvarNames[i], '_AMsets_cLift.png', sep="")
+filename <- paste('./figures/', 'FigS1_', if(i==2){LETTERS[1]}else{LETTERS[2]}, '_',  mvarNames[i], '_AMsets_cLift_ECV.png', sep="")
 Cairo(file=filename, type="png", units="in", width=7, height=8, pointsize=8, res=300)
 plot.new()
 par(cex.main=4)
@@ -213,12 +217,12 @@ dev.off()
 }
 
 #plot together
-filename <- "figures/Fig2_MRSA MSSA AM sets.png"
+filename <- "figures/FigS1_MRSA MSSA AM sets_ECV.png"
 
 Cairo(file=filename, type="png", units="in", width=6, height=3, pointsize=8, res=300)
 plot.new()
-grid.arrange(rasterGrob(readPNG("figures/Fig2_A_MSSA_AMsets_cLift.png")),
-             rasterGrob(readPNG("figures/Fig2_B_MRSA_AMsets_cLift.png")),
+grid.arrange(rasterGrob(readPNG("figures/FigS1_A_MSSA_AMsets_cLift_ECV.png")),
+             rasterGrob(readPNG("figures/FigS1_B_MRSA_AMsets_cLift_ECV.png")),
              ncol=2, nrow=1)
 dev.off()
 
@@ -281,7 +285,7 @@ for (i in seq_along(type.varNames)){
   assign(label, graph)
   
   #save as png to maintain proportions across graphs
-  filename <- paste('./figures/', 'Fig3_', LETTERS[i], '_', type.varNames[i], '_AMsets_cLift.png', sep="")
+  filename <- paste('./figures/', 'FigS2_', LETTERS[i], '_', type.varNames[i], '_AMsets_cLift_ECV.png', sep="")
   Cairo(file=filename, type="png", units="in", width=7, height=8, pointsize=8, res=300)
   plot.new()
   par(cex.main=4)
@@ -291,21 +295,21 @@ for (i in seq_along(type.varNames)){
 }
 
 #plot together
-filename <- "figures/Fig3_Infection Type AM sets.png"
+filename <- "figures/FigS2_Infection Type AM sets_ECV.png"
 
 Cairo(file=filename, type="png", units="in", width=6, height=6, pointsize=8, res=300)
 plot.new()
-grid.arrange(rasterGrob(readPNG("figures/Fig3_A_SA.blood_AMsets_cLift.png")),
-             rasterGrob(readPNG("figures/Fig3_B_SA.inabd_AMsets_cLift.png")),
-             rasterGrob(readPNG("figures/Fig3_C_SA.pneum_AMsets_cLift.png")),
-             rasterGrob(readPNG("figures/Fig3_D_SA.SST_AMsets_cLift.png")),
+grid.arrange(rasterGrob(readPNG("figures/FigS2_A_SA.blood_AMsets_cLift_ECV.png")),
+             rasterGrob(readPNG("figures/FigS2_B_SA.inabd_AMsets_cLift_ECV.png")),
+             rasterGrob(readPNG("figures/FigS2_C_SA.pneum_AMsets_cLift_ECV.png")),
+             rasterGrob(readPNG("figures/FigS2_D_SA.SST_AMsets_cLift_ECV.png")),
              ncol=2, nrow=2)
 dev.off()
 
 ################## Legends for AM circle plots
 #must be saved with same dimensions are circle graphs to maintain proportions.
 #insert into documents with figures without resizing the legend or figure images to maintain proportions
-filename <- "./figures/legend_color_AMSets.png"
+filename <- "./figures/legend_color_AMSets_ECV.png"
 Cairo(file=filename, type="png", units="in", width=7, height=8, pointsize=8, res=300)
 plot.new()
 legend('center', legend=c("1 - 2", "2 - 5", "5 - 10", "> 10"), text.width = 0.1,
@@ -313,7 +317,7 @@ legend('center', legend=c("1 - 2", "2 - 5", "5 - 10", "> 10"), text.width = 0.1,
        title="Line Color: Average cLift")
 dev.off()
 
-filename <- "./figures/legend_width_AMSets.png"
+filename <- "./figures/legend_width_AMSets_ECV.png"
 Cairo(file=filename, type="png", units="in", width=7, height=8, pointsize=8, res=300)
 plot.new()
 legend('center', legend=c("1", "3", "6", "\u2265 9 "), text.width = 0.1,
@@ -322,7 +326,7 @@ legend('center', legend=c("1", "3", "6", "\u2265 9 "), text.width = 0.1,
 dev.off()
 
 #combine at same proportions as combined circle plots
-filename <- "./figures/legend_combined_AmSets.png"
+filename <- "./figures/legend_combined_AmSets_ECV.png"
 Cairo(file=filename, type="png", units="in", width=6, height=3, pointsize=8, res=300)
 plot.new()
 grid.arrange(rasterGrob(readPNG("figures/legend_color_AMSets.png")),

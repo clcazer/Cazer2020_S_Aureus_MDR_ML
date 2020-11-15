@@ -1,7 +1,7 @@
 # ---
 # title: "Antibiogram and MDR Profiles"
 # author: "Casey Cazer"
-# Last updated: "Sep 11, 2020"
+# Last updated: "Nov 15, 2020"
 # output: html_document
 # ---
 
@@ -84,6 +84,7 @@ write.xlsx(SupTable1, filename, row.names=FALSE)
 step1 <- mutate(AM_class, AM=as.character(AM), Abbreviation=as.character(Abbreviation)) %>% left_join(SA.bp, by=c("AM"="Antimicrobial", "Abbreviation"="Abbreviation")) %>% select(AM, Abbreviation, NSbp, Resource, Code) #get AM, Abbreviation, NSbp, Resource of NSBP and Class Code
 step2 <- filter(as.data.frame(SupTable1), Category=="Overall") %>% select(-Category, -"Total Isolates") %>% t() %>% as.data.frame() %>% tibble::rownames_to_column(var="Antimicrobial") #get overall antibiogram (prevalence, num tested)
 Table1 <- full_join(step1, as.data.frame(step2), by=c("AM"="Antimicrobial")) %>% dplyr::rename(PropNS=V1, Class=Code) %>% arrange(Class) #combine
+Table1$PropNS <- paste(as.numeric(sapply(str_split(Table1$PropNS, " "), '[', 1))*100, "% ", sapply(str_split(Table1$PropNS, " "), '[', 2), sep="") #turn proportion into %
 
 #save
 filename <- "results/Table1_Antibiogram.xlsx"

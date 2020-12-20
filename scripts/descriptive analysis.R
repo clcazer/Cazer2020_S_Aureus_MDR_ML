@@ -1,6 +1,6 @@
 # title: "Descriptive Analysis"
 # author: "Casey Cazer"
-# Last updated: Sep 18, 2020
+# Last updated: Nov 25, 2020
 
 sink("results/descriptive.rtf", append=FALSE)
 #this script provides descriptive output for the manuscript
@@ -34,6 +34,20 @@ filter(mdr.classtable, !(NumClassRes %in% c("0", "1", "2"))) %>% summarize(sum=s
 
 #overall prevalence of pan-susceptible
 filter(mdr.classtable, NumClassRes=="0") %>% summarize(sum=sum(NumIsolates)/sum(mdr.classtable$NumIsolates)) %>% round(3)
+
+#telavancin resistance accounting for +/- 1 dilution MIC lab error
+abgm %>% filter(Category=="Overall") %>% select(Telavancin_Prevalence) 
+TLV.bp <- as.numeric(filter(SA.bp, Antimicrobial=="Telavancin") %>% select(NSbp)) + 0.005 #telavancin breakpoint, add 0.005 to get appropriate dilution due to rounding
+summary(SA$Telavancin)
+sum(as.numeric(str_remove_all(as.character(SA$Telavancin), "<=|>"))>(2*TLV.bp), na.rm=T)/sum(!is.na(SA$Telavancin)) #low estimate
+sum(as.numeric(str_remove_all(as.character(SA$Telavancin), "<=|>"))>(0.5*TLV.bp), na.rm=T)/sum(!is.na(SA$Telavancin)) #high estimate
+
+#ceftaroline resistance accounting for +/- 1 dilution MIC lab error
+abgm %>% filter(Category=="Overall") %>% select(Ceftaroline_Prevalence) 
+CPT.bp <- as.numeric(filter(SA.bp, Antimicrobial=="Ceftaroline") %>% select(NSbp)) #ceftaroline breakpoint
+summary(SA$Ceftaroline)
+sum(as.numeric(str_remove_all(as.character(SA$Ceftaroline), "<=|>"))>(2*CPT.bp), na.rm=T)/sum(!is.na(SA$Ceftaroline)) #low estimate
+sum(as.numeric(str_remove_all(as.character(SA$Ceftaroline), "<=|>"))>(0.5*CPT.bp), na.rm=T)/sum(!is.na(SA$Ceftaroline)) #high estimate
 
 #five most common class resistance pattern, with cLift interval excluding 1
 filter(all.sets_combined_boot, LiftCrosses1==FALSE) %>% group_by(ClassCodes) %>% dplyr::summarise(count=n(), avgcLift=mean(cLift)) %>% arrange(desc(count)) %>% head(5)
@@ -100,14 +114,22 @@ Reduce(intersect, lapply(mrsa.6.7$Classes.sort, unlist)) #the 6-class and 7-clas
 #have a background of B-lactam (a), FQ (b), macrolide (c) resistance (common to all)
 
 #false negatives explain why not all expected cross-resistances show up in a pattern 
-#(e.g. penicillin not connected to ertapenem subnetworks even though all isolates with ertapenem R also have penicillin R)
-filter(SA.db, Ertapenem==TRUE) %>% select(Penicillin)
+#(e.g. penicillin not connected to ertapenem subnetworks even though all isolates with ertapenem R also have penicillin R and OXA R)
+table(SA.db$Ertapenem, SA.db$Penicillin, SA.db$Oxacillin, dnn=c("Ertapenem", "Penicillin", "Oxacillin"))
 
-##eCSR P-val of ertapenem-penicillin sets all > 0.05
-summary(subset(MRSA_sets, items %ain% c("Ertapenem", "Penicillin")))@quality
-summary(subset(SA.SST_sets, items %ain% c("Ertapenem", "Penicillin")))@quality
-summary(subset(SA.blood_sets, items %ain% c("Ertapenem", "Penicillin")))@quality
-summary(subset(SA.pneum_sets, items %ain% c("Ertapenem", "Penicillin")))@quality
+##eCSR P-val of ertapenem-penicillin-oxacillin sets all > 0.05
+###where to look?
+table(SA.db$Ertapenem, SA.db$Study.Year) #ertapenem R only in 2008
+table(SA.db$Ertapenem, SA.db$Infection.Type) #ertapenem R in BSI, SSTI, PIHP
+summary(subset(MRSA_sets, items %ain% c("Ertapenem", "Penicillin", "Oxacillin")))@quality #only MRSA sets have eCSR P-values < 0.1 for ETP sets
+summary(subset(SA.SST_sets, items %ain% c("Ertapenem", "Penicillin", "Oxacillin")))@quality
+summary(subset(SA.blood_sets, items %ain% c("Ertapenem", "Penicillin", "Oxacillin")))@quality
+summary(subset(SA.pneum_sets, items %ain% c("Ertapenem", "Penicillin", "Oxacillin")))@quality
+summary(subset(SA2008_sets, items %ain% c("Ertapenem", "Penicillin", "Oxacillin")))@quality
+
+##CPT co-resistance vs ETP*PEN*OXA co-resistance
+all.sets_combined_boot %>% filter(grepl("Ceftaroline", items)) %>% distinct(ClassCodes)
+inspect(subset(MRSA_sets, items %ain% c("Ertapenem", "Penicillin", "Oxacillin") & Pval.eCSR<0.1))
 
 
 #association sets recovered from most common resistance phenotypes (Table2)

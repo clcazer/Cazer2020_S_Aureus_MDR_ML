@@ -85,6 +85,7 @@ step1 <- mutate(AM_class, AM=as.character(AM), Abbreviation=as.character(Abbrevi
 step2 <- filter(as.data.frame(SupTable1), Category=="Overall") %>% select(-Category, -"Total Isolates") %>% t() %>% as.data.frame() %>% tibble::rownames_to_column(var="Antimicrobial") #get overall antibiogram (prevalence, num tested)
 Table1 <- full_join(step1, as.data.frame(step2), by=c("AM"="Antimicrobial")) %>% dplyr::rename(PropNS=V1, Class=Code) %>% arrange(Class) #combine
 Table1$PropNS <- paste(as.numeric(sapply(str_split(Table1$PropNS, " "), '[', 1))*100, "% ", sapply(str_split(Table1$PropNS, " "), '[', 2), sep="") #turn proportion into %
+Table1$NSbp <- paste("> ", Table1$NSbp, sep="")
 
 #save
 filename <- "results/Table1_Antibiogram.xlsx"
